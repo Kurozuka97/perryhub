@@ -250,9 +250,6 @@ export default function HomeScreen({ onOpenVault, mangaSources, animeSources, al
       {animeSources.length > 0 && (
         <SourceRow title="ANIME SECTION" sources={animeSources} onSelect={onSelect} />
       )}
-      {altSources.length > 0 && (
-        <SourceRow title="ALTERNATIVE" sources={altSources} onSelect={onSelect} />
-      )}
 
       {/* Footer */}
       <div className="px-8 py-6" style={{ borderTop: '1px solid rgba(0,201,201,0.05)' }}>
