@@ -73,8 +73,9 @@ export default function Home() {
           <iframe
             src={`/api/proxy?url=${encodeURIComponent(frameUrl)}`}
             className="w-full h-full"
-            sandbox="allow-scripts allow-forms allow-same-origin"
+            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
             referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
           />
         ) : (
           <HomeScreen
