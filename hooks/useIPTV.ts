@@ -9,9 +9,14 @@ const SOURCES = [
     url: 'https://iptv-org.github.io/iptv/index.m3u',
   },
   {
-    id: 'iptv-org',
-    label: 'MY',
-    url: 'https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/my.m3u',
+    id: 'free-tv',
+    label: 'Free-TV (HD Only)',
+    url: 'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8',
+  },
+  {
+    id: 'pluto-tv',
+    label: 'Pluto TV',
+    url: 'https://i.mjh.nz/PlutoTV/all.m3u8',
   },
 ]
 
