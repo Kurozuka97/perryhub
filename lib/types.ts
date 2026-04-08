@@ -65,4 +65,5 @@ export interface Channel {
   group?: string
   country?: string
   language?: string
+  source?: string
 }
