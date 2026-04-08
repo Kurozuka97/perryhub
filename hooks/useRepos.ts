@@ -11,14 +11,14 @@ export function useRepos() {
   useEffect(() => {
     async function fetchAll() {
       const entries = await Promise.all(
-        (Object.entries(REPO_URLS) as [Tab, string][]).map(async ([key, url]) => {
-          try {
-            const res = await fetch(url)
-            const data = await res.json()
-            return [key, data] as [Tab, Source[]]
-          } catch {
-            return [key, []] as [Tab, Source[]]
-          }
+        (Object.entries(REPO_URLS) as [Tab, string[]][]).map(async ([key, urls]) => {
+          const results = await Promise.allSettled(
+            urls.map(url => fetch(url).then(res => res.json()))
+          )
+          const merged = results
+            .filter(r => r.status === 'fulfilled')
+            .flatMap(r => (r as PromiseFulfilledResult<Source[]>).value)
+          return [key, merged] as [Tab, Source[]]
         })
       )
       setRepos(Object.fromEntries(entries) as RepoData)
