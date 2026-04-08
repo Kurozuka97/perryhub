@@ -12,7 +12,8 @@ export function useIPTV() {
   useEffect(() => {
     async function fetchM3U() {
       try {
-        const res = await fetch(`/api/proxy?url=${encodeURIComponent(M3U_URL)}`)
+        // Fetch direct — GitHub Pages ada CORS *
+        const res = await fetch(M3U_URL)
         const text = await res.text()
         const parsed = parseM3U(text)
         setChannels(parsed)
