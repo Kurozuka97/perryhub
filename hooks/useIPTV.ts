@@ -2,7 +2,18 @@
 import { useEffect, useState } from 'react'
 import { Channel } from '@/lib/types'
 
-const M3U_URL = 'https://iptv-org.github.io/iptv/index.m3u'
+const SOURCES = [
+  {
+    id: 'iptv-org',
+    label: 'IPTV-Org (Global)',
+    url: 'https://iptv-org.github.io/iptv/index.m3u',
+  },
+  {
+    id: 'my-abangcendol',
+    label: 'Malaysia (abangcendol)',
+    url: 'https://raw.githubusercontent.com/abangcendol/IPTV/refs/heads/main/Malaysia_3.m3u',
+  },
+]
 
 export function useIPTV() {
   const [channels, setChannels] = useState<Channel[]>([])
@@ -10,44 +21,58 @@ export function useIPTV() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    async function fetchM3U() {
+    async function fetchAll() {
       try {
-        // Fetch direct — GitHub Pages ada CORS *
-        const res = await fetch(M3U_URL)
-        const text = await res.text()
-        const parsed = parseM3U(text)
-        setChannels(parsed)
+        const results = await Promise.allSettled(
+          SOURCES.map(s =>
+            fetch(s.url)
+              .then(res => res.text())
+              .then(text => parseM3U(text, s.label))
+          )
+        )
+
+        const merged: Channel[] = []
+        for (const result of results) {
+          if (result.status === 'fulfilled') merged.push(...result.value)
+        }
+
+        // Dedupe by stream URL
+        const seen = new Set<string>()
+        const deduped = merged.filter(ch => {
+          if (seen.has(ch.url)) return false
+          seen.add(ch.url)
+          return true
+        })
+
+        setChannels(deduped)
       } catch {
         setError(true)
       } finally {
         setLoading(false)
       }
     }
-    fetchM3U()
+
+    fetchAll()
   }, [])
 
   return { channels, loading, error }
 }
 
-function parseM3U(text: string): Channel[] {
+function parseM3U(text: string, sourceLabel?: string): Channel[] {
   const lines = text.split('\n')
   const channels: Channel[] = []
-
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
     if (!line.startsWith('#EXTINF')) continue
-
     const name = line.match(/,(.+)$/)?.[1]?.trim() || 'Unknown'
     const logo = line.match(/tvg-logo="([^"]+)"/)?.[1]
     const group = line.match(/group-title="([^"]+)"/)?.[1]
     const country = line.match(/tvg-country="([^"]+)"/)?.[1]
     const language = line.match(/tvg-language="([^"]+)"/)?.[1]
     const url = lines[i + 1]?.trim()
-
     if (url && !url.startsWith('#')) {
-      channels.push({ name, url, logo, group, country, language })
+      channels.push({ name, url, logo, group, country, language, source: sourceLabel })
     }
   }
-
   return channels
 }
