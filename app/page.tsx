@@ -75,7 +75,6 @@ export default function Home() {
             className="w-full h-full"
             sandbox="allow-scripts allow-forms allow-same-origin"
             referrerPolicy="no-referrer-when-downgrade"
-            allowFullScreen
           />
         ) : (
           <HomeScreen
