@@ -11,7 +11,7 @@ const SOURCES = [
   {
     id: 'iptv-org',
     label: 'NFSW',
-    url: 'http://cdn.adultiptv.net/lists/all.m3u8',
+    url: 'https://iptv-org.github.io/iptv/index.nsfw.m3u',
   },
 ]
 
