@@ -52,10 +52,16 @@ export const DNS_OPTIONS = [
   { label: 'AliDNS', value: 'https://dns.alidns.com/resolve' },
 ]
 
-export const REPO_URLS: Record<Tab, string> = {
-  manga: 'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Manga.json',
-  anime: 'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Anime.json',
-  alternative: 'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Alternative.json',
+export const REPO_URLS: Record<Tab, string[]> = {
+  manga: [
+    'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Manga.json',
+  ],
+  anime: [
+    'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Anime.json',
+  ],
+  alternative: [
+    'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Alternative.json',
+  ],
 }
 
 export interface Channel {
