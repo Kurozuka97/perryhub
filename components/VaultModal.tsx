@@ -26,8 +26,8 @@ const TABS: { id: ActiveTab; label: string }[] = [
   { id: 'manga', label: 'Manga' },
   { id: 'anime', label: 'Anime' },
   { id: 'alternative', label: 'Alt' },
-  { id: 'bookmarks', label: 'Bookmarks' },
   { id: 'iptv', label: 'IPTV' },
+  { id: 'bookmarks', label: 'Bookmarks' },
 ]
 
 type SortOption = 'default' | 'name' | 'lang' | 'version'
