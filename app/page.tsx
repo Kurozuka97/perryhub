@@ -25,7 +25,6 @@ export default function Home() {
     setSourceStatus('loading')
     saveSettings({ lastSelectedUrl: url, lastSelectedName: name })
 
-    // Add to recents
     const allSources = [...repos.manga, ...repos.anime, ...repos.alternative]
     const matched = allSources.find(s => {
       const u = s.sources?.[0]?.baseUrl || s.baseUrl || ''
@@ -74,8 +73,9 @@ export default function Home() {
           <iframe
             src={`/api/proxy?url=${encodeURIComponent(frameUrl)}`}
             className="w-full h-full"
-            sandbox="allow-scripts allow-forms allow-same-origin"
+            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
             referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
           />
         ) : (
           <HomeScreen
