@@ -57,3 +57,12 @@ export const REPO_URLS: Record<Tab, string> = {
   anime: 'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Anime.json',
   alternative: 'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Alternative.json',
 }
+
+export interface Channel {
+  name: string
+  url: string
+  logo?: string
+  group?: string
+  country?: string
+  language?: string
+}
