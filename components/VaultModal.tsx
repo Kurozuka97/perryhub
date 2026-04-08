@@ -26,6 +26,7 @@ const TABS: { id: ActiveTab; label: string }[] = [
   { id: 'anime', label: 'Anime' },
   { id: 'alternative', label: 'Alt' },
   { id: 'bookmarks', label: 'Bookmarks' },
+  { id: 'iptv', label: 'IPTV' },
 ]
 
 type SortOption = 'default' | 'name' | 'lang' | 'version'
@@ -222,7 +223,7 @@ export default function VaultModal({ open, onClose, repos, loading, settings, on
           <div className="flex-1 overflow-y-auto px-8 py-6">
             {loading && activeTab !== 'bookmarks' ? (
               <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-                {Array.from({ length: 12 }).map((_, i) => (
+                {.from({ length: 12 }).map((_, i) => (
                   <div key={i} className="h-24 rounded animate-pulse" style={{ background: '#0a1a1b' }} />
                 ))}
               </div>
