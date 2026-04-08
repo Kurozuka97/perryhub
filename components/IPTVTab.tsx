@@ -10,18 +10,22 @@ export default function IPTVTab() {
   const [search, setSearch] = useState('')
   const [country, setCountry] = useState('all')
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null)
+  const [limit, setLimit] = useState(200)
 
   const countries = useMemo(() => {
     return Array.from(new Set(channels.map(c => c.country).filter(Boolean))).sort()
   }, [channels])
 
   const filtered = useMemo(() => {
+    setLimit(200) // reset limit bila search/filter tukar
     return channels.filter(c => {
       const matchSearch = c.name.toLowerCase().includes(search.toLowerCase())
       const matchCountry = country === 'all' || c.country === country
       return matchSearch && matchCountry
-    }).slice(0, 200) // limit render
+    })
   }, [channels, search, country])
+
+  const visible = filtered.slice(0, limit)
 
   if (error) return (
     <div className="flex items-center justify-center h-48">
@@ -71,7 +75,7 @@ export default function IPTVTab() {
         </select>
 
         <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', flexShrink: 0 }}>
-          {filtered.length} channels
+          {visible.length}/{filtered.length} channels
         </span>
       </div>
 
@@ -84,57 +88,72 @@ export default function IPTVTab() {
             ))}
           </div>
         ) : (
-          <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-            {filtered.map((channel, i) => (
-              <motion.button
-                key={`${channel.name}-${i}`}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.15, delay: Math.min(i * 0.01, 0.3) }}
-                onClick={() => setActiveChannel(channel)}
-                className="text-left rounded p-4 transition-all"
-                style={{ background: '#0a1a1b', border: '1px solid rgba(0,201,201,0.07)' }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(0,201,201,0.3)'
-                  e.currentTarget.style.background = '#0d2022'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'rgba(0,201,201,0.07)'
-                  e.currentTarget.style.background = '#0a1a1b'
-                }}
+          <>
+            <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+              {visible.map((channel, i) => (
+                <motion.button
+                  key={`${channel.name}-${i}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.15, delay: Math.min(i * 0.01, 0.3) }}
+                  onClick={() => setActiveChannel(channel)}
+                  className="text-left rounded p-4 transition-all"
+                  style={{ background: '#0a1a1b', border: '1px solid rgba(0,201,201,0.07)' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'rgba(0,201,201,0.3)'
+                    e.currentTarget.style.background = '#0d2022'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'rgba(0,201,201,0.07)'
+                    e.currentTarget.style.background = '#0a1a1b'
+                  }}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    {channel.logo ? (
+                      <img
+                        src={channel.logo}
+                        alt={channel.name}
+                        width={32}
+                        height={32}
+                        style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }}
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 4, flexShrink: 0,
+                        background: 'rgba(0,201,201,0.12)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00c9c9" strokeWidth="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                      </div>
+                    )}
+                    <span className="text-sm font-medium truncate" style={{ color: 'rgba(232,245,245,0.9)' }}>
+                      {channel.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#a0c4c4', textTransform: 'uppercase', letterSpacing: 1 }}>
+                      {channel.country || 'N/A'}
+                    </span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Load More */}
+            {filtered.length > limit && (
+              <button
+                onClick={() => setLimit(l => l + 200)}
+                className="w-full py-3 mt-6 rounded transition-all"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#4a8888', border: '1px solid rgba(0,201,201,0.1)', letterSpacing: 1, textTransform: 'uppercase' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#00c9c9'}
+                onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
               >
-                <div className="flex items-center gap-3 mb-2">
-                  {channel.logo ? (
-                    <img
-                      src={channel.logo}
-                      alt={channel.name}
-                      width={32}
-                      height={32}
-                      style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }}
-                      onError={(e) => { e.currentTarget.style.display = 'none' }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: 32, height: 32, borderRadius: 4, flexShrink: 0,
-                      background: 'rgba(0,201,201,0.12)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00c9c9" strokeWidth="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
-                    </div>
-                  )}
-                  <span className="text-sm font-medium truncate" style={{ color: 'rgba(232,245,245,0.9)' }}>
-                    {channel.name}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#a0c4c4', textTransform: 'uppercase', letterSpacing: 1 }}>
-                    {channel.country || 'N/A'}
-                  </span>
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                </div>
-              </motion.button>
-            ))}
-          </div>
+                Load More — {filtered.length - limit} remaining
+              </button>
+            )}
+          </>
         )}
       </div>
     </>
