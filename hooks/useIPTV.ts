@@ -9,9 +9,9 @@ const SOURCES = [
     url: 'https://iptv-org.github.io/iptv/index.m3u',
   },
   {
-    id: 'my-abangcendol',
-    label: 'Malaysia (abangcendol)',
-    url: 'https://raw.githubusercontent.com/abangcendol/IPTV/refs/heads/main/Malaysia_3.m3u',
+    id: 'iptv-org',
+    label: 'NFSW',
+    url: 'http://cdn.adultiptv.net/lists/all.m3u8',
   },
 ]
 
