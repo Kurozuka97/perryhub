@@ -10,8 +10,8 @@ const SOURCES = [
   },
   {
     id: 'iptv-org',
-    label: 'NFSW',
-    url: 'https://iptv-org.github.io/iptv/index.nsfw.m3u',
+    label: 'MY',
+    url: 'https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/my.m3u',
   },
 ]
 
