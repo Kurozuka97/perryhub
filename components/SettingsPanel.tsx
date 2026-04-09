@@ -27,158 +27,161 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[200]"
           />
 
-          {/* Panel */}
+          {/* Dropdown anchored to top-right, below navbar */}
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="fixed right-0 top-0 bottom-0 z-[201] w-72 flex flex-col"
-            style={{ background: '#0C0C12', borderLeft: '1px solid rgba(255,255,255,0.06)' }}
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="fixed right-4 top-16 z-[201] w-72 flex flex-col overflow-hidden"
+            style={{
+              background: '#0a1a1b',
+              border: '1px solid rgba(0,201,201,0.12)',
+              borderRadius: 8,
+              boxShadow: '0 24px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,201,201,0.04)',
+            }}
           >
-            {/* Header */}
-            <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0">
-              <div>
-                <h2 className="text-lg font-light text-white leading-none mb-1" style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: 2 }}>
-                  Config
-                </h2>
-                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-widest">
-                  {authMode === 'user' ? 'Perry Hub Account' : 'Guest Session'}
-                </p>
+            {/* Account Header */}
+            <div
+              className="flex flex-col items-center py-6 px-6 gap-3"
+              style={{ background: 'linear-gradient(160deg, rgba(0,201,201,0.1) 0%, transparent 100%)', borderBottom: '1px solid rgba(0,201,201,0.08)' }}
+            >
+              {/* Avatar */}
+              <div style={{
+                width: 56, height: 56, borderRadius: 14,
+                background: authMode === 'user' ? 'rgba(0,201,201,0.15)' : 'rgba(255,255,255,0.05)',
+                border: authMode === 'user' ? '1px solid rgba(0,201,201,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                {authMode === 'user' && perryId ? (
+                  <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 28, color: '#00c9c9', lineHeight: 1 }}>
+                    {perryId.charAt(0).toUpperCase()}
+                  </span>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(232,245,245,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                  </svg>
+                )}
               </div>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors border border-white/5 hover:border-white/15 rounded-sm"
-              >
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </button>
+
+              {/* Name + status */}
+              <div className="text-center">
+                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: '#e8f5f5', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 500 }}>
+                  {authMode === 'user' && perryId ? perryId : 'Guest'}
+                </p>
+                <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${authMode === 'user' ? 'bg-teal-400 animate-pulse' : 'bg-zinc-600'}`} />
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: authMode === 'user' ? '#00c9c9' : '#6ababa', textTransform: 'uppercase', letterSpacing: 2 }}>
+                    {authMode === 'user' ? 'Perry Hub ID · Synced' : 'Guest Session · Not Synced'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Vault status pill */}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  status === 'online' ? 'bg-teal-400 animate-pulse' :
+                  status === 'error' ? 'bg-red-500' : 'bg-zinc-600'
+                }`} />
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, textTransform: 'uppercase', letterSpacing: 2, color:
+                  status === 'online' ? '#00c9c9' : status === 'error' ? '#ff4444' : '#6ababa'
+                }}>
+                  {status === 'online' ? 'Cloud Online' : status === 'error' ? 'Sync Error' : 'Connecting...'}
+                </span>
+                {uid && (
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'rgba(232,245,245,0.25)', letterSpacing: 1 }}>
+                    · {uid.substring(0, 8)}
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-7">
+            {/* Config sections */}
+            <div className="flex flex-col divide-y" style={{ borderColor: 'rgba(0,201,201,0.06)' }}>
 
-              {/* Account */}
-              <section className="space-y-3">
-                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-[0.25em]">Account</p>
-                <div className="p-3 border border-white/5 rounded-sm space-y-3">
-                  {authMode === 'user' && perryId ? (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <div style={{
-                          width: 32, height: 32, borderRadius: 6, flexShrink: 0,
-                          background: 'rgba(0,201,201,0.15)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontFamily: 'Bebas Neue, sans-serif', fontSize: 16, color: '#00c9c9',
-                        }}>
-                          {perryId.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-white uppercase" style={{ fontFamily: 'JetBrains Mono, monospace', letterSpacing: 1 }}>
-                            {perryId}
-                          </p>
-                          <p className="font-mono text-[8px] text-zinc-400 uppercase tracking-wide mt-0.5">
-                            Perry Hub ID
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                        <span className="font-mono text-[9px] text-teal-400 uppercase">Synced</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-                        <span className="font-mono text-[9px] text-zinc-400 uppercase">Guest — not synced</span>
-                      </div>
-                      <p className="font-mono text-[8px] text-zinc-400 uppercase leading-relaxed">
-                        Settings won't persist across devices
-                      </p>
-                    </>
-                  )}
-                </div>
-              </section>
-
-              {/* Preferences */}
-              <section className="space-y-3">
-                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-[0.25em]">Preferences</p>
+              {/* NSFW Toggle */}
+              <div className="px-4 py-3">
                 <Toggle
                   enabled={settings.showNSFW}
                   onToggle={() => onSave({ showNSFW: !settings.showNSFW })}
                   label="NSFW Overlay"
                   description="Show 18+ sources"
                 />
-                <div className="p-3 border border-white/5 rounded-sm space-y-2">
-                  <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Language</p>
-                  <select
-                    value={settings.prefLang}
-                    onChange={(e) => onSave({ prefLang: e.target.value })}
-                    className="w-full bg-transparent border border-white/5 rounded-sm px-2 py-2 text-[10px] text-zinc-400 font-mono outline-none uppercase cursor-pointer"
-                  >
-                    <option value="all">Global</option>
-                    {langs.map(l => (
-                      <option key={l} value={l}>{l.toUpperCase()}</option>
-                    ))}
-                  </select>
-                </div>
-              </section>
+              </div>
 
-              {/* Network */}
-              <section className="space-y-3">
-                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-[0.25em]">Network</p>
-                <div className="p-3 border border-white/5 rounded-sm space-y-2">
-                  <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wide">DNS Provider</p>
-                  <select
-                    value={settings.dnsProvider}
-                    onChange={(e) => onSave({ dnsProvider: e.target.value })}
-                    className="w-full bg-transparent border border-white/5 rounded-sm px-2 py-2 text-[10px] text-zinc-400 font-mono outline-none uppercase cursor-pointer"
-                  >
-                    {DNS_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+              {/* Language */}
+              <div className="px-4 py-3 flex items-center justify-between gap-3">
+                <div>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#e8f5f5', textTransform: 'uppercase', letterSpacing: 1 }}>Language</p>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 }}>Source filter</p>
                 </div>
-              </section>
+                <select
+                  value={settings.prefLang}
+                  onChange={(e) => onSave({ prefLang: e.target.value })}
+                  className="outline-none cursor-pointer"
+                  style={{
+                    background: 'rgba(0,201,201,0.06)',
+                    border: '1px solid rgba(0,201,201,0.15)',
+                    borderRadius: 4,
+                    padding: '4px 8px',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 9,
+                    color: '#00c9c9',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    minWidth: 80,
+                  }}
+                >
+                  <option value="all">Global</option>
+                  {langs.map(l => (
+                    <option key={l} value={l}>{l.toUpperCase()}</option>
+                  ))}
+                </select>
+              </div>
 
-              {/* Vault status */}
-              <section className="space-y-3">
-                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-[0.25em]">Vault</p>
-                <div className="p-3 border border-white/5 rounded-sm space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${
-                      status === 'online' ? 'bg-teal-400 animate-pulse' :
-                      status === 'error' ? 'bg-red-500' : 'bg-zinc-600'
-                    }`} />
-                    <span className={`font-mono text-[9px] uppercase ${
-                      status === 'online' ? 'text-teal-400' :
-                      status === 'error' ? 'text-red-400' : 'text-zinc-400'
-                    }`}>
-                      {status === 'online' ? 'Cloud Online' : status === 'error' ? 'Sync Error' : 'Connecting...'}
-                    </span>
-                  </div>
-                  {uid && (
-                    <p className="font-mono text-[8px] text-zinc-400 break-all">
-                      {uid.substring(0, 16)}...
-                    </p>
-                  )}
+              {/* DNS */}
+              <div className="px-4 py-3 flex items-center justify-between gap-3">
+                <div>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#e8f5f5', textTransform: 'uppercase', letterSpacing: 1 }}>DNS</p>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 }}>Network provider</p>
                 </div>
-              </section>
+                <select
+                  value={settings.dnsProvider}
+                  onChange={(e) => onSave({ dnsProvider: e.target.value })}
+                  className="outline-none cursor-pointer"
+                  style={{
+                    background: 'rgba(0,201,201,0.06)',
+                    border: '1px solid rgba(0,201,201,0.15)',
+                    borderRadius: 4,
+                    padding: '4px 8px',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 9,
+                    color: '#00c9c9',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    minWidth: 80,
+                  }}
+                >
+                  {DNS_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-white/5 shrink-0 space-y-2">
+            {/* Footer actions */}
+            <div className="p-3 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(0,201,201,0.08)' }}>
               {authMode === 'user' && (
                 <button
                   onClick={() => { onLogout(); onClose() }}
-                  className="w-full py-2.5 font-mono text-[9px] uppercase tracking-widest transition-colors rounded-sm"
-                  style={{ border: '1px solid rgba(255,68,68,0.2)', color: '#ff4444', background: 'transparent' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,68,68,0.05)'}
+                  className="w-full py-2 rounded transition-all"
+                  style={{ border: '1px solid rgba(255,68,68,0.2)', color: '#ff4444', background: 'transparent', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,68,68,0.06)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   Logout
@@ -187,8 +190,8 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
               {authMode === 'guest' && (
                 <button
                   onClick={() => { onLogout(); onClose() }}
-                  className="w-full py-2.5 font-mono text-[9px] uppercase tracking-widest transition-colors rounded-sm"
-                  style={{ border: '1px solid rgba(0,201,201,0.15)', color: '#00c9c9', background: 'transparent' }}
+                  className="w-full py-2 rounded transition-all"
+                  style={{ border: '1px solid rgba(0,201,201,0.15)', color: '#00c9c9', background: 'transparent', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,201,201,0.05)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
@@ -197,7 +200,10 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
               )}
               <button
                 onClick={onClose}
-                className="w-full py-2.5 font-mono text-[9px] uppercase tracking-widest text-zinc-400 hover:text-white border border-white/5 hover:border-white/15 rounded-sm transition-colors"
+                className="w-full py-2 rounded transition-all"
+                style={{ border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(232,245,245,0.4)', background: 'transparent', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#e8f5f5'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(232,245,245,0.4)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
               >
                 Close
               </button>
