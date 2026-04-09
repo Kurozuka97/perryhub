@@ -1,9 +1,11 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Channel } from '@/lib/types'
 import { useIPTV } from '@/hooks/useIPTV'
 import IPTVPlayer from './IPTVPlayer'
+
+type StreamStatus = 'checking' | 'live' | 'dead'
 
 export default function IPTVTab() {
   const { channels, loading, error } = useIPTV()
@@ -11,13 +13,27 @@ export default function IPTVTab() {
   const [country, setCountry] = useState('all')
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null)
   const [limit, setLimit] = useState(200)
+  const [streamStatus, setStreamStatus] = useState<Record<string, StreamStatus>>({})
+
+  const checkStream = useCallback(async (channel: Channel) => {
+    if (streamStatus[channel.url]) return // already checked
+    setStreamStatus(prev => ({ ...prev, [channel.url]: 'checking' }))
+    try {
+      const res = await fetch(`/api/proxy?url=${encodeURIComponent(channel.url)}`, {
+        signal: AbortSignal.timeout(5000),
+      })
+      setStreamStatus(prev => ({ ...prev, [channel.url]: res.ok ? 'live' : 'dead' }))
+    } catch {
+      setStreamStatus(prev => ({ ...prev, [channel.url]: 'dead' }))
+    }
+  }, [streamStatus])
 
   const countries = useMemo(() => {
     return Array.from(new Set(channels.map(c => c.country).filter(Boolean))).sort()
   }, [channels])
 
   const filtered = useMemo(() => {
-    setLimit(200) // reset limit bila search/filter tukar
+    setLimit(200)
     return channels.filter(c => {
       const matchSearch = c.name.toLowerCase().includes(search.toLowerCase())
       const matchCountry = country === 'all' || c.country === country
@@ -26,6 +42,18 @@ export default function IPTVTab() {
   }, [channels, search, country])
 
   const visible = filtered.slice(0, limit)
+
+  function getDotColor(url: string) {
+    const s = streamStatus[url]
+    if (s === 'live') return '#00ff88'
+    if (s === 'dead') return '#ff4444'
+    if (s === 'checking') return '#ff8c42'
+    return '#1a3a3a'
+  }
+
+  function getDotGlow(url: string) {
+    return streamStatus[url] === 'live' ? '0 0 6px #00ff88' : 'none'
+  }
 
   if (error) return (
     <div className="flex items-center justify-center h-48">
@@ -46,8 +74,8 @@ export default function IPTVTab() {
       )}
 
       {/* Filter bar */}
-      <div className="shrink-0 px-8 py-4 flex gap-3 items-center" style={{ borderBottom: '1px solid rgba(0,201,201,0.05)' }}>
-        <div className="flex-1 flex items-center gap-3 pb-2" style={{ borderBottom: '1px solid rgba(0,201,201,0.1)' }}>
+      <div className="shrink-0 px-4 md:px-8 py-4 flex flex-wrap gap-3 items-center" style={{ borderBottom: '1px solid rgba(0,201,201,0.05)' }}>
+        <div className="flex-1 min-w-[160px] flex items-center gap-3 pb-2" style={{ borderBottom: '1px solid rgba(0,201,201,0.1)' }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a3a3a" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input
             type="text"
@@ -80,7 +108,7 @@ export default function IPTVTab() {
       </div>
 
       {/* Grid */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
         {loading ? (
           <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
             {Array.from({ length: 12 }).map((_, i) => (
@@ -97,16 +125,17 @@ export default function IPTVTab() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15, delay: Math.min(i * 0.01, 0.3) }}
                   onClick={() => setActiveChannel(channel)}
-                  className="text-left rounded p-4 transition-all"
-                  style={{ background: '#0a1a1b', border: '1px solid rgba(0,201,201,0.07)' }}
                   onMouseEnter={e => {
                     e.currentTarget.style.borderColor = 'rgba(0,201,201,0.3)'
                     e.currentTarget.style.background = '#0d2022'
+                    checkStream(channel)
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.borderColor = 'rgba(0,201,201,0.07)'
                     e.currentTarget.style.background = '#0a1a1b'
                   }}
+                  className="text-left rounded p-4 transition-all"
+                  style={{ background: '#0a1a1b', border: '1px solid rgba(0,201,201,0.07)' }}
                 >
                   <div className="flex items-center gap-3 mb-2">
                     {channel.logo ? (
@@ -135,7 +164,13 @@ export default function IPTVTab() {
                     <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#a0c4c4', textTransform: 'uppercase', letterSpacing: 1 }}>
                       {channel.country || 'N/A'}
                     </span>
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    <div
+                      className="w-1.5 h-1.5 rounded-full transition-all"
+                      style={{
+                        background: getDotColor(channel.url),
+                        boxShadow: getDotGlow(channel.url),
+                      }}
+                    />
                   </div>
                 </motion.button>
               ))}
