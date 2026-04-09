@@ -1,7 +1,10 @@
 'use client'
 
+type VaultTab = 'manga' | 'anime' | 'alternative' | 'iptv' | 'bookmarks'
+
 interface Props {
   onOpenVault: () => void
+  onOpenVaultTab: (tab: VaultTab) => void  // ← tambah
   frameActive: boolean
   onHome: () => void
   sourceName: string
@@ -9,13 +12,19 @@ interface Props {
   frameUrl?: string
 }
 
-export default function Navbar({ onOpenVault, frameActive, onHome, sourceName, sourceStatus, frameUrl }: Props) {
+export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHome, sourceName, sourceStatus, frameUrl }: Props) {
   const statusColor = {
     idle: '#1a3a3a',
     loading: '#ff8c42',
     live: '#00c9c9',
     error: '#ff4444',
   }[sourceStatus]
+
+  const NAV_TABS: { label: string; tab: VaultTab }[] = [
+    { label: 'Manga', tab: 'manga' },
+    { label: 'Anime', tab: 'anime' },
+    { label: 'Alt', tab: 'alternative' },
+  ]
 
   return (
     <nav
@@ -26,7 +35,6 @@ export default function Navbar({ onOpenVault, frameActive, onHome, sourceName, s
         borderBottom: '1px solid rgba(0,201,201,0.06)',
       }}
     >
-      {/* Left — logo + nav links */}
       <div className="flex items-center gap-8">
         <button onClick={onHome} className="hover:opacity-80 transition-opacity">
           <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 24, letterSpacing: 3, color: '#00c9c9' }}>
@@ -35,10 +43,10 @@ export default function Navbar({ onOpenVault, frameActive, onHome, sourceName, s
         </button>
 
         <div className="hidden md:flex items-center gap-6">
-          {['Manga', 'Anime', 'Alt'].map((label) => (
+          {NAV_TABS.map(({ label, tab }) => (
             <button
-              key={label}
-              onClick={onOpenVault}
+              key={tab}
+              onClick={() => onOpenVaultTab(tab)}  // ← navigate to specific tab
               className="text-sm transition-colors"
               style={{ color: 'rgba(232,245,245,0.45)', fontWeight: 400 }}
               onMouseEnter={e => (e.currentTarget.style.color = '#e8f5f5')}
@@ -50,7 +58,6 @@ export default function Navbar({ onOpenVault, frameActive, onHome, sourceName, s
         </div>
       </div>
 
-      {/* Right — status + open in tab + vault btn */}
       <div className="flex items-center gap-3">
         {frameActive && (
           <div
