@@ -79,7 +79,7 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p style={{ fontFamily: display, fontSize: 20, color: '#e8f5f5', letterSpacing: 2, lineHeight: 1 }}>
+                  <p style={{ fontFamily: mono, fontSize: 15, color: '#e8f5f5', letterSpacing: 2, lineHeight: 1, fontWeight: 600 }}>
                     {isUser ? perryId : 'Guest'}
                   </p>
                   <p style={{ fontFamily: mono, fontSize: 9, color: isUser ? '#00c9c9' : '#7ecece', textTransform: 'uppercase', letterSpacing: 2, marginTop: 5 }}>
