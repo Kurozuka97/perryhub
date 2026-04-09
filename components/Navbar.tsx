@@ -118,7 +118,7 @@ export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHom
           style={{
             background: 'transparent',
             border: '1px solid rgba(255,255,255,0.06)',
-            color: authMode === 'user' ? '#00c9c9' : 'rgba(232,245,245,0.4)',
+            color: authMode === 'user' ? '#00c9c9' : 'rgba(232,245,245,0.75)',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: 10,
             letterSpacing: 1,
