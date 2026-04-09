@@ -1,5 +1,5 @@
-import { REPO_URLS } from '../types'
-import { getValidSourceUrl } from '../source-utils'
+import { REPO_URLS } from '../types.js'
+import { getValidSourceUrl } from '../source-utils.js'
 
 interface SourceEntry {
   baseUrl?: string
