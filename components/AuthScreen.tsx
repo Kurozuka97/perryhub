@@ -44,12 +44,18 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
     setLoading(false)
   }
 
+  const handleBack = () => {
+    setMode('welcome')
+    setError('')
+    setId('')
+    setPassword('')
+  }
+
   return (
     <div
       className="fixed inset-0 z-[300] flex items-center justify-center"
       style={{ background: '#060d0e' }}
     >
-      {/* BG glow */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(0,180,180,0.08) 0%, transparent 70%)'
       }} />
@@ -137,7 +143,6 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
         {/* Login / Register mode */}
         {(mode === 'login' || mode === 'register') && (
           <div className="flex flex-col gap-4">
-            {/* ID field */}
             <div>
               <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a8888', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
                 Perry Hub ID
@@ -160,7 +165,6 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
               />
             </div>
 
-            {/* Password field */}
             <div>
               <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a8888', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
                 Password
@@ -182,14 +186,12 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
               />
             </div>
 
-            {/* Error */}
             {error && (
               <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#ff4444', textTransform: 'uppercase', letterSpacing: 1 }}>
                 {error}
               </p>
             )}
 
-            {/* Submit */}
             <button
               onClick={handleSubmit}
               disabled={loading}
@@ -208,8 +210,15 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
               {loading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Create ID'}
             </button>
 
-            {/* Switch mode */}
             <div className="flex items-center justify-between mt-1">
+              <button
+                onClick={handleBack}
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 1 }}
+                onMouseEnter={e => e.currentTarget.style.color = '#4a8888'}
+                onMouseLeave={e => e.currentTarget.style.color = '#1a3a3a'}
+              >
+                ← Back
+              </button>
               <button
                 onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}
                 style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 1 }}
@@ -220,9 +229,9 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
               </button>
               <button
                 onClick={onGuest}
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 1 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#4a8888'}
-                onMouseLeave={e => e.currentTarget.style.color = '#1a3a3a'}
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#a0c4c4', textTransform: 'uppercase', letterSpacing: 1 }}
+                onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
+                onMouseLeave={e => e.currentTarget.style.color = '#a0c4c4'}
               >
                 Guest
               </button>
