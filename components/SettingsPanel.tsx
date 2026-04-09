@@ -184,6 +184,17 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
                   Logout
                 </button>
               )}
+              {authMode === 'guest' && (
+                <button
+                  onClick={() => { onLogout(); onClose() }}
+                  className="w-full py-2.5 font-mono text-[9px] uppercase tracking-widest transition-colors rounded-sm"
+                  style={{ border: '1px solid rgba(0,201,201,0.15)', color: '#00c9c9', background: 'transparent' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,201,201,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  Leave Guest
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="w-full py-2.5 font-mono text-[9px] uppercase tracking-widest text-zinc-400 hover:text-white border border-white/5 hover:border-white/15 rounded-sm transition-colors"
