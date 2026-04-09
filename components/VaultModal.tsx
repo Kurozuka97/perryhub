@@ -66,6 +66,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
   const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab ?? 'manga')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
+
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab)
   }, [initialTab])
@@ -132,42 +133,41 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
           style={{ background: '#060d0e' }}
         >
           {/* Header */}
-          <div className="shrink-0 px-8 pt-8 pb-0">
-            <div className="flex items-end justify-between mb-8">
+          <div className="shrink-0 px-4 md:px-8 pt-5 md:pt-8 pb-0">
+            <div className="flex items-center justify-between mb-4 md:mb-8">
               <div>
-                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 8 }}>
+                <p className="hidden md:block" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 8 }}>
                   Archive Access
                 </p>
-                <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 32, letterSpacing: 3, color: '#e8f5f5' }}>
+                <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(22px, 6vw, 32px)', letterSpacing: 3, color: '#e8f5f5' }}>
                   THE VAULT
                 </h1>
               </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onClose}
-                  className="flex items-center gap-2 px-3 py-2 rounded transition-colors"
-                  style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: '#7ecece', border: '1px solid rgba(255,255,255,0.06)', background: 'transparent' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
-                >
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                  Close
-                </button>
-              </div>
+              <button
+                onClick={onClose}
+                className="flex items-center gap-2 px-3 py-2 rounded transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: '#7ecece', border: '1px solid rgba(255,255,255,0.06)', background: 'transparent' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
+                onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                Close
+              </button>
             </div>
 
+            {/* Tabs — scrollable on mobile */}
             {!isSearching && (
-              <div className="flex items-end gap-0" style={{ borderBottom: '1px solid rgba(0,201,201,0.06)' }}>
+              <div className="flex overflow-x-auto" style={{ borderBottom: '1px solid rgba(0,201,201,0.06)', scrollbarWidth: 'none' }}>
                 {TABS.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className="relative px-5 py-3 transition-colors"
+                    className="relative shrink-0 px-4 md:px-5 py-3 transition-colors"
                     style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: activeTab === tab.id ? '#00c9c9' : '#4a8888' }}
                   >
                     {tab.label}
                     {counts[tab.id] !== undefined && (
-                      <span style={{ marginLeft: 6, fontSize: 8, opacity: 0.4 }}>{counts[tab.id]}</span>
+                      <span className="hidden md:inline" style={{ marginLeft: 6, fontSize: 8, opacity: 0.4 }}>{counts[tab.id]}</span>
                     )}
                     {activeTab === tab.id && (
                       <motion.div layoutId="vault-tab-line" className="absolute bottom-0 left-0 right-0" style={{ height: 2, background: '#00c9c9' }} />
@@ -182,7 +182,9 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
             <IPTVTab />
           ) : (
             <>
-              <div className="shrink-0 px-8 py-4 flex gap-3 items-center" style={{ borderBottom: '1px solid rgba(0,201,201,0.05)' }}>
+              {/* Search + Sort — stacked on mobile */}
+              <div className="shrink-0 px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row gap-2 md:gap-3" style={{ borderBottom: '1px solid rgba(0,201,201,0.05)' }}>
+                {/* Search bar */}
                 <div className="flex-1 flex items-center gap-3 pb-2" style={{ borderBottom: '1px solid rgba(0,201,201,0.1)' }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4a9090" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                   <input
@@ -200,13 +202,14 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                   )}
                 </div>
 
+                {/* Filters row */}
                 {!isSearching && (
-                  <>
+                  <div className="flex items-center gap-2 flex-wrap">
                     <select
                       value={sort}
                       onChange={e => setSort(e.target.value as SortOption)}
                       className="rounded outline-none cursor-pointer uppercase"
-                      style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#7ecece' }}
+                      style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '5px 8px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#7ecece' }}
                     >
                       <option value="default">Default</option>
                       <option value="name">A–Z</option>
@@ -219,21 +222,28 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                         value={settings.prefLang}
                         onChange={e => onSave({ prefLang: e.target.value })}
                         className="rounded outline-none cursor-pointer uppercase"
-                        style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#7ecece' }}
+                        style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '5px 8px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#7ecece' }}
                       >
                         <option value="all">All</option>
                         {langs.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
                       </select>
                     )}
-                  </>
+
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', flexShrink: 0, marginLeft: 'auto' }}>
+                      {filtered.length} sources
+                    </span>
+                  </div>
                 )}
 
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', flexShrink: 0 }}>
-                  {isSearching ? `${crossTabResults.length} results` : `${filtered.length} sources`}
-                </span>
+                {isSearching && (
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', flexShrink: 0 }}>
+                    {crossTabResults.length} results
+                  </span>
+                )}
               </div>
 
-              <div className="flex-1 overflow-y-auto px-8 py-6">
+              {/* Grid */}
+              <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-6">
                 {isSearching ? (
                   crossTabResults.length === 0 ? (
                     <div className="flex items-center justify-center h-48">
@@ -242,15 +252,12 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                       </p>
                     </div>
                   ) : (
-                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
                       {crossTabResults.map((source, i) => {
                         const url = source.sources?.[0]?.baseUrl || source.baseUrl || '#'
                         return (
                           <div key={`${source.name}-${i}`} className="relative">
-                            <div
-                              className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded"
-                              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, textTransform: 'uppercase', letterSpacing: 1, color: '#060d0e', background: TAB_COLOURS[source._tab] }}
-                            >
+                            <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, textTransform: 'uppercase', letterSpacing: 1, color: '#060d0e', background: TAB_COLOURS[source._tab] }}>
                               {source._tab}
                             </div>
                             <SourceCard
@@ -266,7 +273,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                     </div>
                   )
                 ) : loading && activeTab !== 'bookmarks' ? (
-                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
                     {Array.from({ length: 12 }).map((_, i) => (
                       <div key={i} className="h-24 rounded animate-pulse" style={{ background: '#0a1a1b' }} />
                     ))}
@@ -277,13 +284,13 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                       {activeTab === 'bookmarks' ? 'No bookmarks yet' : 'No results'}
                     </p>
                     {activeTab === 'bookmarks' && (
-                      <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a9090', textTransform: 'uppercase', letterSpacing: 1 }}>
+                      <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a9090', textTransform: 'uppercase', letterSpacing: 1, textAlign: 'center' }}>
                         Click the bookmark icon on any source card
                       </p>
                     )}
                   </div>
                 ) : (
-                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
                     {filtered.map((source, i) => {
                       const url = source.sources?.[0]?.baseUrl || source.baseUrl || '#'
                       return (
@@ -301,7 +308,8 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                 )}
               </div>
 
-              <div className="shrink-0 px-8 py-3 flex justify-between items-center" style={{ borderTop: '1px solid rgba(0,201,201,0.05)' }}>
+              {/* Footer */}
+              <div className="shrink-0 px-4 md:px-8 py-3 flex justify-between items-center" style={{ borderTop: '1px solid rgba(0,201,201,0.05)' }}>
                 <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1 }}>
                   M:{counts.manga} · A:{counts.anime} · Alt:{counts.alternative} · ★:{counts.bookmarks}
                 </span>
