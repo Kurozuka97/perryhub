@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar'
 import HomeScreen from '@/components/HomeScreen'
 import VaultModal from '@/components/VaultModal'
 import AuthScreen from '@/components/AuthScreen'
+import SettingsPanel from '@/components/SettingsPanel'
 import { useFirebase } from '@/hooks/useFirebase'
 import { useRepos } from '@/hooks/useRepos'
 import { Source } from '@/lib/types'
@@ -21,6 +22,7 @@ export default function Home() {
   const { repos, loading } = useRepos()
 
   const [vaultOpen, setVaultOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [vaultInitialTab, setVaultInitialTab] = useState<VaultTab>('manga')
   const [frameUrl, setFrameUrl] = useState('')
   const [sourceName, setSourceName] = useState('')
@@ -66,6 +68,12 @@ export default function Home() {
     setVaultOpen(true)
   }, [])
 
+  const allLangs = Array.from(new Set([
+    ...repos.manga.map(s => s.lang),
+    ...repos.anime.map(s => s.lang),
+    ...repos.alternative.map(s => s.lang),
+  ].filter(Boolean))).sort() as string[]
+
   if (authMode === 'loading') {
     return (
       <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#060d0e' }}>
@@ -98,7 +106,7 @@ export default function Home() {
         frameUrl={frameUrl}
         authMode={authMode}
         perryId={perryId}
-        onOpenSettings={() => setVaultOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       <main className="flex-1 overflow-hidden relative">
@@ -133,6 +141,19 @@ export default function Home() {
         onSelect={handleSelect}
         onBookmark={handleBookmark}
         isBookmarked={isBookmarked}
+        uid={user?.uid || ''}
+        status={status}
+        perryId={perryId}
+        authMode={authMode}
+        onLogout={logout}
+      />
+
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        onSave={saveSettings}
+        langs={allLangs}
         uid={user?.uid || ''}
         status={status}
         perryId={perryId}
