@@ -38,11 +38,16 @@ export function useFirebase() {
   // Check localStorage kalau dah login before
   useEffect(() => {
     const savedId = localStorage.getItem('perry-hub-id')
+    const savedMode = localStorage.getItem('perry-hub-mode')
     if (savedId) {
       // Auto login as user
       signInAnonymously(auth).catch(() => setStatus('error'))
       setPerryId(savedId)
       setAuthMode('user')
+    } else if (savedMode === 'guest') {
+      // Auto restore guest session
+      signInAnonymously(auth).catch(() => setStatus('error'))
+      setAuthMode('guest')
     } else {
       setAuthMode('auth')
     }
@@ -148,12 +153,14 @@ export function useFirebase() {
   // Guest
   const continueAsGuest = useCallback(async () => {
     await signInAnonymously(auth)
+    localStorage.setItem('perry-hub-mode', 'guest')
     setAuthMode('guest')
   }, [])
 
   // Logout
   const logout = useCallback(() => {
     localStorage.removeItem('perry-hub-id')
+    localStorage.removeItem('perry-hub-mode')
     setPerryId(null)
     setAuthMode('auth')
     setSettings(DEFAULT_SETTINGS)
