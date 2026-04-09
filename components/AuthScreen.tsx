@@ -35,8 +35,8 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
     setError('')
 
     const success = mode === 'login'
-      ? await onLogin(id.trim().toLowerCase(), password)
-      : await onRegister(id.trim().toLowerCase(), password)
+      ? await onLogin(id.trim(), password)
+      : await onRegister(id.trim(), password)
 
     if (!success) {
       setError(mode === 'login' ? 'Wrong ID or password' : 'ID already taken')
