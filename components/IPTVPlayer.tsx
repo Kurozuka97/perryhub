@@ -61,7 +61,7 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
   }
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#000' }}>
+    <div ref={containerRef} className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#000', width: '100%', height: '100%', maxWidth: '100vw', maxHeight: '100vh' }}>
       {/* Navbar */}
       <div
         className="shrink-0 flex items-center justify-between px-6 py-3"
@@ -151,7 +151,15 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
         controls
         autoPlay
         playsInline
-        style={{ background: '#000', objectFit: 'contain', display: status === 'error' ? 'none' : 'block' }}
+        style={{
+          background: '#000',
+          objectFit: 'contain',
+          display: status === 'error' ? 'none' : 'block',
+          width: '100%',
+          height: '100%',
+          maxWidth: '100vw',
+          maxHeight: isFullscreen ? '100vh' : 'calc(100vh - 48px)',
+        }}
       />
     </div>
   )
