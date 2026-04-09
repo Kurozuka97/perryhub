@@ -96,6 +96,9 @@ export default function Home() {
         sourceName={sourceName}
         sourceStatus={sourceStatus}
         frameUrl={frameUrl}
+        authMode={authMode}
+        perryId={perryId}
+        onOpenSettings={() => setVaultOpen(true)}
       />
 
       <main className="flex-1 overflow-hidden relative">
