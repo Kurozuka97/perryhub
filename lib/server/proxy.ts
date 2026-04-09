@@ -1,27 +1,65 @@
-const HTML_CONTENT_TYPE = 'text/html'
+const HTML_CONTENT_TYPES = new Set(['text/html', 'application/xhtml+xml'])
 const REQUEST_TIMEOUT_MS = 15_000
+const MAX_REDIRECT_HOPS = 5
 const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 const PROXY_RUNTIME_ATTRIBUTE = 'data-perry-proxy-runtime'
 const PROXY_ENDPOINT_PREFIX = '/api/proxy?url='
 
-const PRIVATE_HOST_PATTERNS = [
-  /^localhost$/i,
-  /^127\./,
+// --- IP / hostname validation ---
+
+const PRIVATE_IPV4_PATTERNS = [
   /^10\./,
   /^192\.168\./,
   /^169\.254\./,
-  /^0\.0\.0\.0$/,
+  /^127\./,
+  /^0\./,
   /^172\.(1[6-9]|2\d|3[0-1])\./,
-  /^\[?::1\]?$/i,
 ]
 
-const UPSTREAM_BODY_MARKERS: Array<[string, RegExp]> = [
-  ['cloudflare', /cloudflare|cf-ray|just a moment|checking your browser/i],
-  ['captcha', /captcha|are you human|verify you are human/i],
-  ['login', /login|sign in|log in/i],
-  ['ddos-guard', /ddos-guard/i],
+const PRIVATE_IPV6_PREFIXES = [
+  '::1',
+  'fc00',
+  'fd00',
+  'fe80',
+  'fe90',
+  'fea0',
+  'feb0',
+  'fec0',
+  'fed0',
+  'fee0',
+  'fef0',
+  '::ffff:127.',
+  '::ffff:10.',
+  '::ffff:192.168.',
+  '::ffff:172.',
+  '::ffff:169.254.',
+  '::ffff:0.',
 ]
+
+function isPrivateIpv4(host: string): boolean {
+  return PRIVATE_IPV4_PATTERNS.some((p) => p.test(host))
+}
+
+function isPrivateIpv6(host: string): boolean {
+  const lower = host.toLowerCase()
+  const bare = lower.replace(/^\[|\]$/g, '')
+  return PRIVATE_IPV6_PREFIXES.some((prefix) => bare.startsWith(prefix))
+}
+
+function isLocalHostname(hostname: string): boolean {
+  return /^localhost$/i.test(hostname)
+}
+
+export function isPrivateAddress(hostname: string): boolean {
+  return (
+    isLocalHostname(hostname) ||
+    isPrivateIpv4(hostname) ||
+    isPrivateIpv6(hostname)
+  )
+}
+
+// --- Error class ---
 
 export class ProxyRequestError extends Error {
   status: number
@@ -47,9 +85,7 @@ interface ProxyOptions {
   allowedHosts?: Set<string>
 }
 
-function isPrivateHost(hostname: string): boolean {
-  return PRIVATE_HOST_PATTERNS.some((pattern) => pattern.test(hostname))
-}
+// --- URL parsing ---
 
 export function parseProxyTarget(rawUrl: string): URL {
   if (!rawUrl?.trim()) {
@@ -68,12 +104,35 @@ export function parseProxyTarget(rawUrl: string): URL {
     throw new ProxyRequestError(400, 'UNSUPPORTED_PROTOCOL', 'Unsupported protocol')
   }
 
-  if (isPrivateHost(target.hostname)) {
+  if (isPrivateAddress(target.hostname)) {
     throw new ProxyRequestError(400, 'PRIVATE_HOST_BLOCKED', 'Private hosts are not allowed')
   }
 
   return target
 }
+
+function assertHostAllowed(target: URL, allowedHosts?: Set<string>): void {
+  if (!allowedHosts || allowedHosts.size === 0) {
+    return
+  }
+
+  if (!allowedHosts.has(target.hostname.toLowerCase())) {
+    throw new ProxyRequestError(
+      403,
+      'HOST_NOT_ALLOWED',
+      'Host is not in the allowed source list',
+    )
+  }
+}
+
+// --- HTML helpers ---
+
+export function isHtmlContentType(contentType: string): boolean {
+  const normalized = contentType.toLowerCase().split(';')[0].trim()
+  return HTML_CONTENT_TYPES.has(normalized)
+}
+
+// --- DOM injection ---
 
 export function injectBaseTag(html: string, target: URL): string {
   const baseTag = `<base href="${target.toString()}">`
@@ -123,27 +182,7 @@ export function buildProxyRuntimeScript(target: URL): string {
   const proxyPath = JSON.stringify(PROXY_ENDPOINT_PREFIX)
 
   return `<script ${PROXY_RUNTIME_ATTRIBUTE}="1">(function(){if(window.__PERRY_PROXY_RUNTIME__)return;window.__PERRY_PROXY_RUNTIME__=true;
-const proxyOrigin=window.location.origin;const proxyPrefix=proxyOrigin+${proxyPath};let currentUrl=new URL(${targetUrl});function toAbsolu
-te(input,base){try{return new URL(String(input),base||currentUrl);}catch{return null;}}function normalizeForProxy(absolute){if(!absolute||
-!/^https?:$/.test(absolute.protocol))return absolute;if(absolute.origin!==proxyOrigin)return absolute;if(absolute.pathname==='/api/proxy')
-{const encodedTarget=absolute.searchParams.get('url');if(encodedTarget){const decoded=toAbsolute(encodedTarget,currentUrl);if(decoded)retu
-rn decoded;}return currentUrl;}return new URL(absolute.pathname+absolute.search+absolute.hash,currentUrl.origin);}function toProxyUrl(inpu
-t,base){const absolute=toAbsolute(input,base);const normalized=normalizeForProxy(absolute);if(!normalized||!/^https?:$/.test(normalized.pr
-otocol))return input;return proxyPrefix+encodeURIComponent(normalized.toString());}function rewriteHistoryUrl(url){if(url==null||url==='')
-return url;const absolute=toAbsolute(url,currentUrl);const normalized=normalizeForProxy(absolute);if(!normalized||!/^https?:$/.test(normal
-ized.protocol))return url;currentUrl=normalized;return proxyPrefix+encodeURIComponent(normalized.toString());}if(window.fetch){const origi
-nalFetch=window.fetch.bind(window);window.fetch=function(input,init){try{if(input instanceof Request){return originalFetch(new Request(toP
-roxyUrl(input.url,currentUrl),input),init);}if(typeof input==='string'||input instanceof URL){return originalFetch(toProxyUrl(String(input
-),currentUrl),init);}}catch{}return originalFetch(input,init);};}const originalOpen=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype
-.open=function(method,url){const args=Array.prototype.slice.call(arguments);try{args[1]=toProxyUrl(String(url),currentUrl);}catch{}return 
-originalOpen.apply(this,args);};const originalPushState=history.pushState.bind(history);history.pushState=function(state,unused,url){retur
-n originalPushState(state,unused,rewriteHistoryUrl(url));};const originalReplaceState=history.replaceState.bind(history);history.replaceSt
-ate=function(state,unused,url){return originalReplaceState(state,unused,rewriteHistoryUrl(url));};document.addEventListener('click',functi
-on(event){const target=event.target;if(!(target instanceof Element))return;const anchor=target.closest('a[href]');if(!anchor)return;const 
-href=anchor.getAttribute('href');if(!href||href.startsWith('#')||href.startsWith('mailto:')||href.startsWith('tel:')||href.startsWith('jav
-ascript:'))return;const proxyUrl=toProxyUrl(href,currentUrl);if(typeof proxyUrl!=='string'||!proxyUrl.startsWith(proxyPrefix))return;if(an
-chor.target&&anchor.target!=='_self'){anchor.setAttribute('href',proxyUrl);return;}event.preventDefault();window.location.assign(proxyUrl)
-;},true);})();</script>`
+const proxyOrigin=window.location.origin;const proxyPrefix=proxyOrigin+${proxyPath};let currentUrl=new URL(${targetUrl});function toAbsolute(input,base){try{return new URL(String(input),base||currentUrl);}catch{return null;}}function normalizeForProxy(absolute){if(!absolute||!/^https?:$/.test(absolute.protocol))return absolute;if(absolute.origin!==proxyOrigin)return absolute;if(absolute.pathname==='/api/proxy'){const encodedTarget=absolute.searchParams.get('url');if(encodedTarget){const decoded=toAbsolute(encodedTarget,currentUrl);if(decoded)return decoded;}return currentUrl;}return new URL(absolute.pathname+absolute.search+absolute.hash,currentUrl.origin);}function toProxyUrl(input,base){const absolute=toAbsolute(input,base);const normalized=normalizeForProxy(absolute);if(!normalized||!/^https?:$/.test(normalized.protocol))return input;return proxyPrefix+encodeURIComponent(normalized.toString());}function rewriteHistoryUrl(url){if(url==null||url==='')return url;const absolute=toAbsolute(url,currentUrl);const normalized=normalizeForProxy(absolute);if(!normalized||!/^https?:$/.test(normalized.protocol))return url;currentUrl=normalized;return proxyPrefix+encodeURIComponent(normalized.toString());}if(window.fetch){const originalFetch=window.fetch.bind(window);window.fetch=function(input,init){try{if(input instanceof Request){return originalFetch(new Request(toProxyUrl(input.url,currentUrl),input),init);}if(typeof input==='string'||input instanceof URL){return originalFetch(toProxyUrl(String(input),currentUrl),init);}}catch{}return originalFetch(input,init);};}const originalOpen=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(method,url){const args=Array.prototype.slice.call(arguments);try{args[1]=toProxyUrl(String(url),currentUrl);}catch{}return originalOpen.apply(this,args);};const originalPushState=history.pushState.bind(history);history.pushState=function(state,unused,url){return originalPushState(state,unused,rewriteHistoryUrl(url));};const originalReplaceState=history.replaceState.bind(history);history.replaceState=function(state,unused,url){return originalReplaceState(state,unused,rewriteHistoryUrl(url));};document.addEventListener('click',function(event){const target=event.target;if(!(target instanceof Element))return;const anchor=target.closest('a[href]');if(!anchor)return;const href=anchor.getAttribute('href');if(!href||href.startsWith('#')||href.startsWith('mailto:')||href.startsWith('tel:')||href.startsWith('javascript:'))return;const proxyUrl=toProxyUrl(href,currentUrl);if(typeof proxyUrl!=='string'||!proxyUrl.startsWith(proxyPrefix))return;if(anchor.target&&anchor.target!=='_self'){anchor.setAttribute('href',proxyUrl);return;}event.preventDefault();window.location.assign(proxyUrl);},true);})();</script>`
 }
 
 export function injectProxyDocument(html: string, target: URL): string {
@@ -165,6 +204,8 @@ export function injectProxyDocument(html: string, target: URL): string {
 
   return `${runtimeScript}${withBaseTag}`
 }
+
+// --- Error pages ---
 
 export function renderProxyErrorPage(input: {
   title: string
@@ -218,19 +259,14 @@ export function renderProxyErrorPage(input: {
 </html>`
 }
 
-function assertHostAllowed(target: URL, allowedHosts?: Set<string>): void {
-  if (!allowedHosts || allowedHosts.size === 0) {
-    return
-  }
+// --- Upstream markers / classification ---
 
-  if (!allowedHosts.has(target.hostname.toLowerCase())) {
-    throw new ProxyRequestError(
-      403,
-      'HOST_NOT_ALLOWED',
-      'Host is not in the allowed source list',
-    )
-  }
-}
+const UPSTREAM_BODY_MARKERS: Array<[string, RegExp]> = [
+  ['cloudflare', /cloudflare|cf-ray|just a moment|checking your browser/i],
+  ['captcha', /captcha|are you human|verify you are human/i],
+  ['login', /login|sign in|log in/i],
+  ['ddos-guard', /ddos-guard/i],
+]
 
 function getUpstreamAccessMarker(contentType: string, body: string): string | null {
   if (!/text\/html|application\/xhtml\+xml|text\/plain/i.test(contentType)) {
@@ -355,18 +391,22 @@ export function mapProxyError(error: unknown): ProxyRequestError {
   return new ProxyRequestError(502, 'UPSTREAM_FETCH_FAILED', 'Proxy error')
 }
 
+// --- Main fetch with manual redirect following ---
+
 export async function fetchProxyPayload(
   rawUrl: string,
   fetchImpl: typeof fetch = fetch,
   options: ProxyOptions = {},
 ): Promise<ProxyPayload> {
-  const target = parseProxyTarget(rawUrl)
-  assertHostAllowed(target, options.allowedHosts)
+  const initial = parseProxyTarget(rawUrl)
+  assertHostAllowed(initial, options.allowedHosts)
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
   try {
-    const response = await fetchImpl(target, {
+    // Follow redirects automatically; Node.js fetch follows by default.
+    // We validate the final URL after the response arrives.
+    const response = await fetchImpl(initial, {
       redirect: 'follow',
       signal: controller.signal,
       headers: {
@@ -375,23 +415,33 @@ export async function fetchProxyPayload(
       },
     })
 
+    // Validate the final URL after all redirects
+    const finalUrl = response.url ? new URL(response.url) : initial
+    assertHostAllowed(finalUrl, options.allowedHosts)
+    if (isPrivateAddress(finalUrl.hostname)) {
+      throw new ProxyRequestError(
+        403,
+        'PRIVATE_HOST_BLOCKED',
+        'Redirect to a private/reserved host is not allowed',
+      )
+    }
+
     const contentType = response.headers.get('content-type') || 'text/plain; charset=utf-8'
     const body = await response.text()
-    const upstreamUrl = response.url || target.toString()
-    const resolvedTarget = new URL(upstreamUrl)
     const failure = classifyUpstreamFailure(response.status, contentType, body)
     if (failure) {
       throw failure
     }
-    const normalizedBody = contentType.includes(HTML_CONTENT_TYPE)
-      ? injectProxyDocument(body, resolvedTarget)
+
+    const normalizedBody = isHtmlContentType(contentType)
+      ? injectProxyDocument(body, finalUrl)
       : body
 
     return {
       body: normalizedBody,
       contentType,
       status: response.status,
-      upstreamUrl,
+      upstreamUrl: finalUrl.toString(),
       upstreamStatusText: response.statusText,
     }
   } catch (error) {

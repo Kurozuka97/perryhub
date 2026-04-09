@@ -1,4 +1,5 @@
 import type { Source } from './types'
+import { isPrivateAddress } from './server/proxy.js'
 
 interface SourceUrlEntry {
   baseUrl?: string
@@ -7,21 +8,6 @@ interface SourceUrlEntry {
 interface SourceUrlCandidate {
   baseUrl?: string
   sources?: SourceUrlEntry[]
-}
-
-const PRIVATE_HOST_PATTERNS = [
-  /^localhost$/i,
-  /^127\./,
-  /^10\./,
-  /^192\.168\./,
-  /^169\.254\./,
-  /^0\.0\.0\.0$/,
-  /^172\.(1[6-9]|2\d|3[0-1])\./,
-  /^\[?::1\]?$/i,
-]
-
-function isPrivateHost(hostname: string): boolean {
-  return PRIVATE_HOST_PATTERNS.some((pattern) => pattern.test(hostname))
 }
 
 function extractUrlCandidates(rawUrl?: string): string[] {
@@ -48,7 +34,7 @@ export function getValidSourceUrl(source: SourceUrlCandidate): string | null {
         continue
       }
 
-      if (isPrivateHost(parsed.hostname)) {
+      if (isPrivateAddress(parsed.hostname)) {
         continue
       }
 

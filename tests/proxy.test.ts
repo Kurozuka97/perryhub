@@ -11,6 +11,7 @@ import {
   normalizeProxyBrowserUrl,
   renderProxyErrorPage,
   toProxyRequestUrl,
+  isPrivateAddress,
 } from '../lib/server/proxy.ts'
 
 test('parseProxyTarget accepts public http and https urls', () => {
@@ -28,6 +29,17 @@ test('parseProxyTarget blocks localhost and private hosts', () => {
   assert.throws(() => parseProxyTarget('http://localhost:3000'), /Private hosts/)
   assert.throws(() => parseProxyTarget('http://127.0.0.1:8080'), /Private hosts/)
   assert.throws(() => parseProxyTarget('http://192.168.1.10'), /Private hosts/)
+})
+
+test('isPrivateAddress detects IPv6 and IPv4-mapped IPv6 private addresses', () => {
+  assert.equal(isPrivateAddress('::1'), true)
+  assert.equal(isPrivateAddress('[::1]'), true)
+  assert.equal(isPrivateAddress('fc00::1'), true)
+  assert.equal(isPrivateAddress('fe80::1'), true)
+  assert.equal(isPrivateAddress('::ffff:127.0.0.1'), true)
+  assert.equal(isPrivateAddress('::ffff:192.168.1.1'), true)
+  assert.equal(isPrivateAddress('2001:db8::1'), false)
+  assert.equal(isPrivateAddress('example.com'), false)
 })
 
 test('injectBaseTag adds a base tag only once', () => {
@@ -227,4 +239,60 @@ test('normalizeProxyBrowserUrl unwraps already proxied urls back to their upstre
   )
 
   assert.equal(normalized.toString(), 'https://comic-growl.com/episodes/123')
+})
+
+test('fetchProxyPayload blocks redirect to non-allowlisted host', async () => {
+  const fetchMock: typeof fetch = async (input) => {
+    const resp = new Response('<html><body>evil</body></html>', {
+      status: 200,
+      headers: { 'content-type': 'text/html' },
+    })
+    Object.defineProperty(resp, 'url', {
+      value: 'https://evil.example.com/',
+    })
+    return resp
+  }
+
+  await assert.rejects(
+    () =>
+      fetchProxyPayload('https://allowed.example/', fetchMock, {
+        allowedHosts: new Set(['allowed.example']),
+      }),
+    /not in the allowed source list/,
+  )
+})
+
+test('fetchProxyPayload blocks redirect to private host', async () => {
+  const fetchMock: typeof fetch = async (input) => {
+    const resp = new Response('<html><body>metadata</body></html>', {
+      status: 200,
+      headers: { 'content-type': 'text/html' },
+    })
+    Object.defineProperty(resp, 'url', {
+      value: 'http://169.254.169.254/latest/meta-data/',
+    })
+    return resp
+  }
+
+  // allowed.example is in the allowlist, but the redirect target 169.254.169.254 is private
+  await assert.rejects(
+    () =>
+      fetchProxyPayload('https://allowed.example/', fetchMock, {
+        allowedHosts: new Set(['allowed.example', '169.254.169.254']),
+      }),
+    /private\/reserved host/,
+  )
+})
+
+test('fetchProxyPayload injects proxy document for XHTML content-type', async () => {
+  const fetchMock: typeof fetch = async () =>
+    new Response('<html><head></head><body>XHTML</body></html>', {
+      status: 200,
+      headers: { 'content-type': 'application/xhtml+xml; charset=utf-8' },
+    })
+
+  const result = await fetchProxyPayload('https://reader.example/page.xhtml', fetchMock)
+
+  assert.match(result.body, /<base href="https:\/\/reader\.example\/page\.xhtml">/)
+  assert.match(result.body, /data-perry-proxy-runtime=/)
 })

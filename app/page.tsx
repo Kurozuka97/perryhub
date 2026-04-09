@@ -39,21 +39,15 @@ export default function Home() {
     setEmbedIssue('')
     saveSettings({ lastSelectedUrl: url, lastSelectedName: name })
 
+    // Add to recents (fire-and-forget — do not block UI)
     const allSources = [...repos.manga, ...repos.anime, ...repos.alternative]
     const matched = allSources.find(s => (s.sources?.[0]?.baseUrl || s.baseUrl || '') === url)
-    await addRecent({
+    addRecent({
       url, name,
       lang: matched?.lang || '',
       nsfw: matched?.nsfw || 0,
       pkg: matched?.pkg,
-    })
-
-    try {
-      await fetch(url, { mode: 'no-cors' })
-      setSourceStatus('live')
-    } catch {
-      setSourceStatus('error')
-    }
+    }).catch(() => {})
   }, [saveSettings, addRecent, repos])
 
   const handleHome = useCallback(() => {
@@ -82,11 +76,11 @@ export default function Home() {
         return
       }
     } catch {
-      // Ignore DOM inspection failures and keep the iframe visible.
+      // Ignore DOM inspection failures (cross-origin) — iframe may still be valid
     }
 
     setEmbedIssue('')
-    setSourceStatus((current) => (current === 'error' ? current : 'live'))
+    setSourceStatus('live')
   }, [])
 
   const handleOpenVaultTab = useCallback((tab: VaultTab) => {
