@@ -3,7 +3,6 @@ import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tab, Source, UserSettings, BookmarkedSource } from '@/lib/types'
 import SourceCard from './SourceCard'
-import SettingsPanel from './SettingsPanel'
 import IPTVTab from './IPTVTab'
 
 interface Props {
@@ -67,8 +66,6 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
   const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab ?? 'manga')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
-  const [settingsOpen, setSettingsOpen] = useState(false)
-
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab)
   }, [initialTab])
@@ -138,7 +135,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
           <div className="shrink-0 px-8 pt-8 pb-0">
             <div className="flex items-end justify-between mb-8">
               <div>
-                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 8 }}>
+                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 8 }}>
                   Archive Access
                 </p>
                 <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 32, letterSpacing: 3, color: '#e8f5f5' }}>
@@ -147,19 +144,9 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setSettingsOpen(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded transition-colors"
-                  style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: '#4a8888', border: '1px solid rgba(0,201,201,0.1)', background: 'transparent' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#00c9c9'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                  Config
-                </button>
-                <button
                   onClick={onClose}
                   className="flex items-center gap-2 px-3 py-2 rounded transition-colors"
-                  style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: '#4a8888', border: '1px solid rgba(255,255,255,0.06)', background: 'transparent' }}
+                  style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: '#7ecece', border: '1px solid rgba(255,255,255,0.06)', background: 'transparent' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
                   onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
                 >
@@ -197,7 +184,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
             <>
               <div className="shrink-0 px-8 py-4 flex gap-3 items-center" style={{ borderBottom: '1px solid rgba(0,201,201,0.05)' }}>
                 <div className="flex-1 flex items-center gap-3 pb-2" style={{ borderBottom: '1px solid rgba(0,201,201,0.1)' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a3a3a" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4a9090" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                   <input
                     type="text"
                     value={search}
@@ -207,7 +194,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                     style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#e8f5f5' }}
                   />
                   {search && (
-                    <button onClick={() => setSearch('')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a' }}>
+                    <button onClick={() => setSearch('')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa' }}>
                       Clear
                     </button>
                   )}
@@ -219,7 +206,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                       value={sort}
                       onChange={e => setSort(e.target.value as SortOption)}
                       className="rounded outline-none cursor-pointer uppercase"
-                      style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#4a8888' }}
+                      style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#7ecece' }}
                     >
                       <option value="default">Default</option>
                       <option value="name">A–Z</option>
@@ -232,7 +219,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                         value={settings.prefLang}
                         onChange={e => onSave({ prefLang: e.target.value })}
                         className="rounded outline-none cursor-pointer uppercase"
-                        style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#4a8888' }}
+                        style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#7ecece' }}
                       >
                         <option value="all">All</option>
                         {langs.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
@@ -241,7 +228,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                   </>
                 )}
 
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', flexShrink: 0 }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', flexShrink: 0 }}>
                   {isSearching ? `${crossTabResults.length} results` : `${filtered.length} sources`}
                 </span>
               </div>
@@ -250,7 +237,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                 {isSearching ? (
                   crossTabResults.length === 0 ? (
                     <div className="flex items-center justify-center h-48">
-                      <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 2 }}>
+                      <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 2 }}>
                         No results
                       </p>
                     </div>
@@ -286,11 +273,11 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                   </div>
                 ) : filtered.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-48 gap-3">
-                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 2 }}>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 2 }}>
                       {activeTab === 'bookmarks' ? 'No bookmarks yet' : 'No results'}
                     </p>
                     {activeTab === 'bookmarks' && (
-                      <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a2a2a', textTransform: 'uppercase', letterSpacing: 1 }}>
+                      <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a9090', textTransform: 'uppercase', letterSpacing: 1 }}>
                         Click the bookmark icon on any source card
                       </p>
                     )}
@@ -315,28 +302,15 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
               </div>
 
               <div className="shrink-0 px-8 py-3 flex justify-between items-center" style={{ borderTop: '1px solid rgba(0,201,201,0.05)' }}>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 1 }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1 }}>
                   M:{counts.manga} · A:{counts.anime} · Alt:{counts.alternative} · ★:{counts.bookmarks}
                 </span>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#1a3a3a', opacity: 0.5 }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#6ababa', opacity: 0.5 }}>
                   {uid ? `${uid.substring(0, 8)}…` : '—'}
                 </span>
               </div>
             </>
           )}
-
-          <SettingsPanel
-            open={settingsOpen}
-            onClose={() => setSettingsOpen(false)}
-            settings={settings}
-            onSave={onSave}
-            langs={langs}
-            uid={uid}
-            status={status}
-            perryId={perryId}
-            authMode={authMode}
-            onLogout={onLogout}
-          />
         </motion.div>
       )}
     </AnimatePresence>
