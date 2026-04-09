@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import Navbar from '@/components/Navbar'
 import HomeScreen from '@/components/HomeScreen'
 import VaultModal from '@/components/VaultModal'
@@ -8,6 +8,7 @@ import SettingsPanel from '@/components/SettingsPanel'
 import { useFirebase } from '@/hooks/useFirebase'
 import { useRepos } from '@/hooks/useRepos'
 import { Source } from '@/lib/types'
+import { detectEmbeddedProxyIssue } from '@/lib/embed-detection'
 
 type SourceStatus = 'idle' | 'loading' | 'live' | 'error'
 type VaultTab = 'manga' | 'anime' | 'alternative' | 'iptv' | 'bookmarks'
@@ -27,12 +28,15 @@ export default function Home() {
   const [frameUrl, setFrameUrl] = useState('')
   const [sourceName, setSourceName] = useState('')
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>('idle')
+  const [embedIssue, setEmbedIssue] = useState('')
+  const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
   const handleSelect = useCallback(async (url: string, name: string) => {
     if (!url || url === '#') return
     setFrameUrl(url)
     setSourceName(name)
     setSourceStatus('loading')
+    setEmbedIssue('')
     saveSettings({ lastSelectedUrl: url, lastSelectedName: name })
 
     const allSources = [...repos.manga, ...repos.anime, ...repos.alternative]
@@ -56,12 +60,34 @@ export default function Home() {
     setFrameUrl('')
     setSourceName('')
     setSourceStatus('idle')
+    setEmbedIssue('')
     saveSettings({ lastSelectedUrl: '', lastSelectedName: '' })
   }, [saveSettings])
 
   const handleBookmark = useCallback((source: Source) => {
     toggleBookmark(source)
   }, [toggleBookmark])
+
+  const handleFrameLoad = useCallback(() => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+
+    try {
+      const doc = iframe.contentDocument
+      const issue = detectEmbeddedProxyIssue(doc?.title || '', doc?.body?.innerText || '')
+
+      if (issue) {
+        setEmbedIssue(issue)
+        setSourceStatus('error')
+        return
+      }
+    } catch {
+      // Ignore DOM inspection failures and keep the iframe visible.
+    }
+
+    setEmbedIssue('')
+    setSourceStatus((current) => (current === 'error' ? current : 'live'))
+  }, [])
 
   const handleOpenVaultTab = useCallback((tab: VaultTab) => {
     setVaultInitialTab(tab)
@@ -111,13 +137,54 @@ export default function Home() {
 
       <main className="flex-1 overflow-hidden relative">
         {frameUrl ? (
-          <iframe
-            src={`/api/proxy?url=${encodeURIComponent(frameUrl)}`}
-            className="w-full h-full"
-            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-            referrerPolicy="no-referrer-when-downgrade"
-            allowFullScreen
-          />
+          <>
+            <iframe
+              ref={iframeRef}
+              src={`/api/proxy?url=${encodeURIComponent(frameUrl)}`}
+              onLoad={handleFrameLoad}
+              className={`w-full h-full ${embedIssue ? 'pointer-events-none opacity-0' : ''}`}
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+            {embedIssue ? (
+              <div className="absolute inset-0 grid place-items-center p-6">
+                <div
+                  className="w-full max-w-xl rounded-xl p-6"
+                  style={{
+                    background: 'rgba(10, 26, 27, 0.96)',
+                    border: '1px solid rgba(0,201,201,0.18)',
+                    boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
+                  }}
+                >
+                  <h2
+                    className="mb-3"
+                    style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 30, letterSpacing: 2, color: '#e8f5f5' }}
+                  >
+                    Embedded View Unavailable
+                  </h2>
+                  <p className="mb-5" style={{ color: 'rgba(232,245,245,0.78)', lineHeight: 1.6 }}>
+                    {embedIssue}
+                  </p>
+                  <button
+                    onClick={() => window.open(frameUrl, '_blank', 'noopener,noreferrer')}
+                    className="px-4 py-2 rounded transition-all"
+                    style={{
+                      background: 'rgba(0,201,201,0.12)',
+                      border: '1px solid rgba(0,201,201,0.28)',
+                      color: '#00c9c9',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 11,
+                      letterSpacing: 1,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Open in Tab
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </>
         ) : (
           <HomeScreen
             onOpenVault={() => setVaultOpen(true)}
