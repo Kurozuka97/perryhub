@@ -77,7 +77,7 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
           <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 36, letterSpacing: 4, color: '#00c9c9' }}>
             PERRY HUB
           </h1>
-          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 3, marginTop: 4 }}>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 3, marginTop: 4 }}>
             {mode === 'welcome' ? 'Official Portal of Truck-Kun Survivors' : mode === 'login' ? 'Welcome back' : 'Create account'}
           </p>
         </div>
@@ -108,14 +108,14 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
               style={{
                 background: 'transparent',
                 border: '1px solid rgba(0,201,201,0.12)',
-                color: '#4a8888',
+                color: '#7ecece',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 11,
                 letterSpacing: 1,
                 textTransform: 'uppercase',
               }}
               onMouseEnter={e => e.currentTarget.style.color = '#00c9c9'}
-              onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
+              onMouseLeave={e => e.currentTarget.style.color = '#7ecece'}
             >
               Create ID
             </button>
@@ -126,14 +126,14 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#a0c4c4',
+                color: '#b8e0e0',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 10,
                 letterSpacing: 1,
                 textTransform: 'uppercase',
               }}
               onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
-              onMouseLeave={e => e.currentTarget.style.color = '#a0c4c4'}
+              onMouseLeave={e => e.currentTarget.style.color = '#b8e0e0'}
             >
               Continue as Guest
             </button>
@@ -144,7 +144,7 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
         {(mode === 'login' || mode === 'register') && (
           <div className="flex flex-col gap-4">
             <div>
-              <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a8888', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
+              <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#7ecece', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
                 Perry Hub ID
               </label>
               <input
@@ -166,7 +166,7 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
             </div>
 
             <div>
-              <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a8888', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
+              <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#7ecece', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
                 Password
               </label>
               <input
@@ -199,7 +199,7 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
               style={{
                 background: loading ? 'rgba(0,201,201,0.05)' : 'rgba(0,201,201,0.1)',
                 border: '1px solid rgba(0,201,201,0.25)',
-                color: loading ? '#1a3a3a' : '#00c9c9',
+                color: loading ? '#4a9090' : '#00c9c9',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 11,
                 letterSpacing: 1,
@@ -213,25 +213,25 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
             <div className="flex items-center justify-between mt-1">
               <button
                 onClick={handleBack}
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 1 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#4a8888'}
-                onMouseLeave={e => e.currentTarget.style.color = '#1a3a3a'}
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1 }}
+                onMouseEnter={e => e.currentTarget.style.color = '#7ecece'}
+                onMouseLeave={e => e.currentTarget.style.color = '#6ababa'}
               >
                 ← Back
               </button>
               <button
                 onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 1 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#4a8888'}
-                onMouseLeave={e => e.currentTarget.style.color = '#1a3a3a'}
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1 }}
+                onMouseEnter={e => e.currentTarget.style.color = '#7ecece'}
+                onMouseLeave={e => e.currentTarget.style.color = '#6ababa'}
               >
                 {mode === 'login' ? 'Create new ID' : 'Already have ID'}
               </button>
               <button
                 onClick={onGuest}
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#a0c4c4', textTransform: 'uppercase', letterSpacing: 1 }}
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#b8e0e0', textTransform: 'uppercase', letterSpacing: 1 }}
                 onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
-                onMouseLeave={e => e.currentTarget.style.color = '#a0c4c4'}
+                onMouseLeave={e => e.currentTarget.style.color = '#b8e0e0'}
               >
                 Guest
               </button>
