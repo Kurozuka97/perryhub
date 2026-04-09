@@ -3,19 +3,23 @@ import { useState, useCallback } from 'react'
 import Navbar from '@/components/Navbar'
 import HomeScreen from '@/components/HomeScreen'
 import VaultModal from '@/components/VaultModal'
+import AuthScreen from '@/components/AuthScreen'
 import { useFirebase } from '@/hooks/useFirebase'
 import { useRepos } from '@/hooks/useRepos'
 import { Source } from '@/lib/types'
 
 type SourceStatus = 'idle' | 'loading' | 'live' | 'error'
-type VaultTab = 'manga' | 'anime' | 'alternative' | 'iptv' | 'bookmarks'
 
 export default function Home() {
-  const { user, settings, saveSettings, status, toggleBookmark, isBookmarked, addRecent } = useFirebase()
+  const {
+    user, settings, saveSettings, status,
+    authMode, perryId,
+    register, login, continueAsGuest, logout,
+    toggleBookmark, isBookmarked, addRecent,
+  } = useFirebase()
   const { repos, loading } = useRepos()
 
   const [vaultOpen, setVaultOpen] = useState(false)
-  const [vaultInitialTab, setVaultInitialTab] = useState<VaultTab>('manga')
   const [frameUrl, setFrameUrl] = useState('')
   const [sourceName, setSourceName] = useState('')
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>('idle')
@@ -28,13 +32,9 @@ export default function Home() {
     saveSettings({ lastSelectedUrl: url, lastSelectedName: name })
 
     const allSources = [...repos.manga, ...repos.anime, ...repos.alternative]
-    const matched = allSources.find(s => {
-      const u = s.sources?.[0]?.baseUrl || s.baseUrl || ''
-      return u === url
-    })
+    const matched = allSources.find(s => (s.sources?.[0]?.baseUrl || s.baseUrl || '') === url)
     await addRecent({
-      url,
-      name,
+      url, name,
       lang: matched?.lang || '',
       nsfw: matched?.nsfw || 0,
       pkg: matched?.pkg,
@@ -59,16 +59,32 @@ export default function Home() {
     toggleBookmark(source)
   }, [toggleBookmark])
 
-  const handleOpenVaultTab = useCallback((tab: VaultTab) => {
-    setVaultInitialTab(tab)
-    setVaultOpen(true)
-  }, [])
+  // Show loading
+  if (authMode === 'loading') {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#060d0e' }}>
+        <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 24, letterSpacing: 4, color: '#1a3a3a' }}>
+          PERRY HUB
+        </div>
+      </div>
+    )
+  }
+
+  // Show auth screen
+  if (authMode === 'auth') {
+    return (
+      <AuthScreen
+        onGuest={continueAsGuest}
+        onLogin={login}
+        onRegister={register}
+      />
+    )
+  }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <Navbar
-        onOpenVault={() => handleOpenVaultTab('manga')}
-        onOpenVaultTab={handleOpenVaultTab}
+        onOpenVault={() => setVaultOpen(true)}
         frameActive={!!frameUrl}
         onHome={handleHome}
         sourceName={sourceName}
@@ -87,7 +103,7 @@ export default function Home() {
           />
         ) : (
           <HomeScreen
-            onOpenVault={() => handleOpenVaultTab('manga')}
+            onOpenVault={() => setVaultOpen(true)}
             mangaSources={repos.manga}
             animeSources={repos.anime}
             altSources={repos.alternative}
@@ -100,7 +116,6 @@ export default function Home() {
       <VaultModal
         open={vaultOpen}
         onClose={() => setVaultOpen(false)}
-        initialTab={vaultInitialTab}
         repos={repos}
         loading={loading}
         settings={settings}
