@@ -9,6 +9,7 @@ import { useRepos } from '@/hooks/useRepos'
 import { Source } from '@/lib/types'
 
 type SourceStatus = 'idle' | 'loading' | 'live' | 'error'
+type VaultTab = 'manga' | 'anime' | 'alternative' | 'iptv' | 'bookmarks'
 
 export default function Home() {
   const {
@@ -20,6 +21,7 @@ export default function Home() {
   const { repos, loading } = useRepos()
 
   const [vaultOpen, setVaultOpen] = useState(false)
+  const [vaultInitialTab, setVaultInitialTab] = useState<VaultTab>('manga')
   const [frameUrl, setFrameUrl] = useState('')
   const [sourceName, setSourceName] = useState('')
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>('idle')
@@ -59,7 +61,11 @@ export default function Home() {
     toggleBookmark(source)
   }, [toggleBookmark])
 
-  // Show loading
+  const handleOpenVaultTab = useCallback((tab: VaultTab) => {
+    setVaultInitialTab(tab)
+    setVaultOpen(true)
+  }, [])
+
   if (authMode === 'loading') {
     return (
       <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#060d0e' }}>
@@ -70,7 +76,6 @@ export default function Home() {
     )
   }
 
-  // Show auth screen
   if (authMode === 'auth') {
     return (
       <AuthScreen
@@ -85,6 +90,7 @@ export default function Home() {
     <div className="h-screen flex flex-col overflow-hidden">
       <Navbar
         onOpenVault={() => setVaultOpen(true)}
+        onOpenVaultTab={handleOpenVaultTab}
         frameActive={!!frameUrl}
         onHome={handleHome}
         sourceName={sourceName}
@@ -116,6 +122,7 @@ export default function Home() {
       <VaultModal
         open={vaultOpen}
         onClose={() => setVaultOpen(false)}
+        initialTab={vaultInitialTab}
         repos={repos}
         loading={loading}
         settings={settings}
