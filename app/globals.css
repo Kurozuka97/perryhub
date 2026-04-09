@@ -14,8 +14,8 @@
   --accent-dim: rgba(0, 201, 201, 0.15);
   --orange: #ff8c42;
   --text-primary: #e8f5f5;
-  --text-secondary: #4a8888;
-  --text-muted: #1a3a3a;
+  --text-secondary: #7ecece;
+  --text-muted: #4a9090;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
