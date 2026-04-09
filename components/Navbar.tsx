@@ -122,7 +122,6 @@ export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHom
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: 10,
             letterSpacing: 1,
-            textTransform: 'uppercase',
           }}
           onMouseEnter={e => {
             e.currentTarget.style.borderColor = 'rgba(0,201,201,0.25)'
@@ -166,7 +165,6 @@ export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHom
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: 10,
             letterSpacing: 1,
-            textTransform: 'uppercase',
           }}
           onMouseEnter={e => {
             e.currentTarget.style.background = 'rgba(0,201,201,0.18)'
