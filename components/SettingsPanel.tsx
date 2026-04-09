@@ -45,13 +45,13 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
                 <h2 className="text-lg font-light text-white leading-none mb-1" style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: 2 }}>
                   Config
                 </h2>
-                <p className="font-mono text-[9px] text-zinc-600 uppercase tracking-widest">
+                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-widest">
                   {authMode === 'user' ? 'Perry Hub Account' : 'Guest Session'}
                 </p>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center text-zinc-600 hover:text-white transition-colors border border-white/5 hover:border-white/15 rounded-sm"
+                className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors border border-white/5 hover:border-white/15 rounded-sm"
               >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                   <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -64,7 +64,7 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
 
               {/* Account */}
               <section className="space-y-3">
-                <p className="font-mono text-[9px] text-zinc-600 uppercase tracking-[0.25em]">Account</p>
+                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-[0.25em]">Account</p>
                 <div className="p-3 border border-white/5 rounded-sm space-y-3">
                   {authMode === 'user' && perryId ? (
                     <>
@@ -81,7 +81,7 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
                           <p className="text-xs font-medium text-white uppercase" style={{ fontFamily: 'JetBrains Mono, monospace', letterSpacing: 1 }}>
                             {perryId}
                           </p>
-                          <p className="font-mono text-[8px] text-zinc-600 uppercase tracking-wide mt-0.5">
+                          <p className="font-mono text-[8px] text-zinc-400 uppercase tracking-wide mt-0.5">
                             Perry Hub ID
                           </p>
                         </div>
@@ -95,9 +95,9 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
                     <>
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-                        <span className="font-mono text-[9px] text-zinc-500 uppercase">Guest — not synced</span>
+                        <span className="font-mono text-[9px] text-zinc-400 uppercase">Guest — not synced</span>
                       </div>
-                      <p className="font-mono text-[8px] text-zinc-700 uppercase leading-relaxed">
+                      <p className="font-mono text-[8px] text-zinc-400 uppercase leading-relaxed">
                         Settings won't persist across devices
                       </p>
                     </>
@@ -107,7 +107,7 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
 
               {/* Preferences */}
               <section className="space-y-3">
-                <p className="font-mono text-[9px] text-zinc-600 uppercase tracking-[0.25em]">Preferences</p>
+                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-[0.25em]">Preferences</p>
                 <Toggle
                   enabled={settings.showNSFW}
                   onToggle={() => onSave({ showNSFW: !settings.showNSFW })}
@@ -131,7 +131,7 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
 
               {/* Network */}
               <section className="space-y-3">
-                <p className="font-mono text-[9px] text-zinc-600 uppercase tracking-[0.25em]">Network</p>
+                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-[0.25em]">Network</p>
                 <div className="p-3 border border-white/5 rounded-sm space-y-2">
                   <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wide">DNS Provider</p>
                   <select
@@ -148,7 +148,7 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
 
               {/* Vault status */}
               <section className="space-y-3">
-                <p className="font-mono text-[9px] text-zinc-600 uppercase tracking-[0.25em]">Vault</p>
+                <p className="font-mono text-[9px] text-zinc-400 uppercase tracking-[0.25em]">Vault</p>
                 <div className="p-3 border border-white/5 rounded-sm space-y-2">
                   <div className="flex items-center gap-2">
                     <div className={`w-1.5 h-1.5 rounded-full ${
@@ -157,13 +157,13 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
                     }`} />
                     <span className={`font-mono text-[9px] uppercase ${
                       status === 'online' ? 'text-teal-400' :
-                      status === 'error' ? 'text-red-400' : 'text-zinc-600'
+                      status === 'error' ? 'text-red-400' : 'text-zinc-400'
                     }`}>
                       {status === 'online' ? 'Cloud Online' : status === 'error' ? 'Sync Error' : 'Connecting...'}
                     </span>
                   </div>
                   {uid && (
-                    <p className="font-mono text-[8px] text-zinc-700 break-all">
+                    <p className="font-mono text-[8px] text-zinc-400 break-all">
                       {uid.substring(0, 16)}...
                     </p>
                   )}
@@ -186,7 +186,7 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
               )}
               <button
                 onClick={onClose}
-                className="w-full py-2.5 font-mono text-[9px] uppercase tracking-widest text-zinc-600 hover:text-white border border-white/5 hover:border-white/15 rounded-sm transition-colors"
+                className="w-full py-2.5 font-mono text-[9px] uppercase tracking-widest text-zinc-400 hover:text-white border border-white/5 hover:border-white/15 rounded-sm transition-colors"
               >
                 Close
               </button>
