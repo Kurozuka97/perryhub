@@ -124,7 +124,8 @@ export function useFirebase() {
       setPerryId(id)
       setAuthMode('user')
       return true
-    } catch {
+    } catch (e) {
+      console.error("Register error:", e)
       return false
     }
   }, [])
@@ -145,7 +146,8 @@ export function useFirebase() {
       setPerryId(id)
       setAuthMode('user')
       return true
-    } catch {
+    } catch (e) {
+      console.error("Login error:", e)
       return false
     }
   }, [])
