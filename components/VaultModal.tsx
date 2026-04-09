@@ -19,6 +19,9 @@ interface Props {
   isBookmarked: (url: string) => boolean
   uid: string
   status: 'connecting' | 'online' | 'error'
+  perryId: string | null
+  authMode: 'loading' | 'auth' | 'guest' | 'user'
+  onLogout: () => void
 }
 
 type ActiveTab = Tab | 'bookmarks' | 'iptv'
@@ -60,13 +63,12 @@ function bookmarkToSource(b: BookmarkedSource): Source {
   return { name: b.name, lang: b.lang, nsfw: b.nsfw, pkg: b.pkg, baseUrl: b.url }
 }
 
-export default function VaultModal({ open, onClose, initialTab, repos, loading, settings, onSave, onSelect, onBookmark, isBookmarked, uid, status }: Props) {
+export default function VaultModal({ open, onClose, initialTab, repos, loading, settings, onSave, onSelect, onBookmark, isBookmarked, uid, status, perryId, authMode, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab ?? 'manga')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Sync tab bila initialTab berubah
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab)
   }, [initialTab])
@@ -79,7 +81,6 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
     return Array.from(new Set(data.map(s => s.lang).filter(Boolean))).sort()
   }, [repos, activeTab])
 
-  // Cross-tab search across manga + anime + alternative
   const crossTabResults = useMemo((): SourceWithTab[] => {
     if (!isSearching) return []
     const allTabs: Tab[] = ['manga', 'anime', 'alternative']
@@ -94,7 +95,6 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
     )
   }, [repos, search, isSearching, settings.showNSFW])
 
-  // Per-tab filtered results
   const filtered = useMemo(() => {
     if (isSearching || activeTab === 'iptv') return []
     let data: Source[] = activeTab === 'bookmarks'
@@ -169,7 +169,6 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
               </div>
             </div>
 
-            {/* Tabs — hidden when searching */}
             {!isSearching && (
               <div className="flex items-end gap-0" style={{ borderBottom: '1px solid rgba(0,201,201,0.06)' }}>
                 {TABS.map((tab) => (
@@ -192,12 +191,10 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
             )}
           </div>
 
-          {/* IPTV Tab — full takeover */}
           {activeTab === 'iptv' && !isSearching ? (
             <IPTVTab />
           ) : (
             <>
-              {/* Search + Sort */}
               <div className="shrink-0 px-8 py-4 flex gap-3 items-center" style={{ borderBottom: '1px solid rgba(0,201,201,0.05)' }}>
                 <div className="flex-1 flex items-center gap-3 pb-2" style={{ borderBottom: '1px solid rgba(0,201,201,0.1)' }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a3a3a" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -249,7 +246,6 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                 </span>
               </div>
 
-              {/* Grid */}
               <div className="flex-1 overflow-y-auto px-8 py-6">
                 {isSearching ? (
                   crossTabResults.length === 0 ? (
@@ -266,14 +262,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                           <div key={`${source.name}-${i}`} className="relative">
                             <div
                               className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded"
-                              style={{
-                                fontFamily: 'JetBrains Mono, monospace',
-                                fontSize: 7,
-                                textTransform: 'uppercase',
-                                letterSpacing: 1,
-                                color: '#060d0e',
-                                background: TAB_COLOURS[source._tab],
-                              }}
+                              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, textTransform: 'uppercase', letterSpacing: 1, color: '#060d0e', background: TAB_COLOURS[source._tab] }}
                             >
                               {source._tab}
                             </div>
@@ -325,7 +314,6 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                 )}
               </div>
 
-              {/* Footer */}
               <div className="shrink-0 px-8 py-3 flex justify-between items-center" style={{ borderTop: '1px solid rgba(0,201,201,0.05)' }}>
                 <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 1 }}>
                   M:{counts.manga} · A:{counts.anime} · Alt:{counts.alternative} · ★:{counts.bookmarks}
@@ -345,6 +333,9 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
             langs={langs}
             uid={uid}
             status={status}
+            perryId={perryId}
+            authMode={authMode}
+            onLogout={onLogout}
           />
         </motion.div>
       )}
