@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tab, Source, UserSettings, BookmarkedSource } from '@/lib/types'
 import SourceCard from './SourceCard'
@@ -9,6 +9,7 @@ import IPTVTab from './IPTVTab'
 interface Props {
   open: boolean
   onClose: () => void
+  initialTab?: ActiveTab
   repos: Record<Tab, Source[]>
   loading: boolean
   settings: UserSettings
@@ -59,11 +60,16 @@ function bookmarkToSource(b: BookmarkedSource): Source {
   return { name: b.name, lang: b.lang, nsfw: b.nsfw, pkg: b.pkg, baseUrl: b.url }
 }
 
-export default function VaultModal({ open, onClose, repos, loading, settings, onSave, onSelect, onBookmark, isBookmarked, uid, status }: Props) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('manga')
+export default function VaultModal({ open, onClose, initialTab, repos, loading, settings, onSave, onSelect, onBookmark, isBookmarked, uid, status }: Props) {
+  const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab ?? 'manga')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Sync tab bila initialTab berubah
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
 
   const isSearching = search.trim().length > 0
 
