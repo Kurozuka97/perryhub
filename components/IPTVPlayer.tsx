@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
 
 interface Props {
@@ -8,22 +8,37 @@ interface Props {
   onClose: () => void
 }
 
+type PlayerStatus = 'loading' | 'playing' | 'error'
+
 export default function IPTVPlayer({ url, name, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [status, setStatus] = useState<PlayerStatus>('loading')
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
+    setStatus('loading')
+
     if (Hls.isSupported()) {
       const hls = new Hls()
       hls.loadSource(url)
       hls.attachMedia(video)
-      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}))
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => setStatus('error'))
+        setStatus('playing')
+      })
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (data.fatal) setStatus('error')
+      })
       return () => hls.destroy()
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = url
-      video.play().catch(() => {})
+      video.play().catch(() => setStatus('error'))
+      video.onplaying = () => setStatus('playing')
+      video.onerror = () => setStatus('error')
+    } else {
+      setStatus('error')
     }
   }, [url])
 
@@ -35,9 +50,15 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
         style={{ background: 'rgba(6,13,14,0.95)', borderBottom: '1px solid rgba(0,201,201,0.1)' }}
       >
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{
+              background: status === 'playing' ? '#00ff88' : status === 'error' ? '#ff4444' : '#ff8c42',
+              animation: status === 'loading' ? 'pulse 1.5s infinite' : 'none',
+            }}
+          />
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#00c9c9', textTransform: 'uppercase', letterSpacing: 1 }}>
-            LIVE
+            {status === 'playing' ? 'LIVE' : status === 'error' ? 'ERROR' : 'LOADING'}
           </span>
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#a0c4c4', textTransform: 'uppercase' }}>
             {name}
@@ -55,6 +76,34 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
         </button>
       </div>
 
+      {/* Error State */}
+      {status === 'error' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10" style={{ background: '#060d0e' }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: '50%',
+            background: 'rgba(255,68,68,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4444" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#ff4444', textTransform: 'uppercase', letterSpacing: 2 }}>
+            Stream Unavailable
+          </p>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 1 }}>
+            {name}
+          </p>
+          <button
+            onClick={onClose}
+            className="mt-2 px-5 py-2 rounded transition-all"
+            style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#00c9c9', border: '1px solid rgba(0,201,201,0.2)', textTransform: 'uppercase', letterSpacing: 1 }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(0,201,201,0.5)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(0,201,201,0.2)'}
+          >
+            Go Back
+          </button>
+        </div>
+      )}
+
       {/* Video */}
       <video
         ref={videoRef}
@@ -62,7 +111,7 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
         controls
         autoPlay
         playsInline
-        style={{ background: '#000', objectFit: 'contain' }}
+        style={{ background: '#000', objectFit: 'contain', display: status === 'error' ? 'none' : 'block' }}
       />
     </div>
   )
