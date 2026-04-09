@@ -20,6 +20,39 @@ const SOURCES = [
   },
 ]
 
+const CACHE_KEY = 'iptv_channels_cache'
+const CACHE_TTL = 1000 * 60 * 60 // 1 hour
+
+interface CacheEntry {
+  channels: Channel[]
+  cachedAt: number
+}
+
+function getCache(): Channel[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const entry: CacheEntry = JSON.parse(raw)
+    const expired = Date.now() - entry.cachedAt > CACHE_TTL
+    if (expired) {
+      sessionStorage.removeItem(CACHE_KEY)
+      return null
+    }
+    return entry.channels
+  } catch {
+    return null
+  }
+}
+
+function setCache(channels: Channel[]) {
+  try {
+    const entry: CacheEntry = { channels, cachedAt: Date.now() }
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry))
+  } catch {
+    // sessionStorage full — skip caching
+  }
+}
+
 export function useIPTV() {
   const [channels, setChannels] = useState<Channel[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,6 +60,14 @@ export function useIPTV() {
 
   useEffect(() => {
     async function fetchAll() {
+      // Check cache first
+      const cached = getCache()
+      if (cached) {
+        setChannels(cached)
+        setLoading(false)
+        return
+      }
+
       try {
         const results = await Promise.allSettled(
           SOURCES.map(s =>
@@ -41,7 +82,6 @@ export function useIPTV() {
           if (result.status === 'fulfilled') merged.push(...result.value)
         }
 
-        // Dedupe by stream URL
         const seen = new Set<string>()
         const deduped = merged.filter(ch => {
           if (seen.has(ch.url)) return false
@@ -49,6 +89,7 @@ export function useIPTV() {
           return true
         })
 
+        setCache(deduped)
         setChannels(deduped)
       } catch {
         setError(true)
