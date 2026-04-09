@@ -14,11 +14,11 @@ export default function Toggle({ enabled, onToggle, label, description }: Props)
       className="w-full flex items-center justify-between p-3 rounded-sm border border-white/5 hover:border-white/10 transition-colors group"
     >
       <div className="flex flex-col gap-0.5 text-left">
-        <span className="text-[11px] font-medium text-silver-400 group-hover:text-silver-400 uppercase tracking-wide">
+        <span className="text-[11px] font-medium text-teal-200 group-hover:text-teal-100 uppercase tracking-wide">
           {label}
         </span>
         {description && (
-          <span className="text-[9px] text-ink-600 font-mono">{description}</span>
+          <span className="text-[9px] text-teal-500 font-mono">{description}</span>
         )}
       </div>
 
