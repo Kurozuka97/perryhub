@@ -14,7 +14,6 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<PlayerStatus>('loading')
-  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     const video = videoRef.current
@@ -44,22 +43,6 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
     }
   }, [url])
 
-  // Track fullscreen state
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement)
-    document.addEventListener('fullscreenchange', handler)
-    return () => document.removeEventListener('fullscreenchange', handler)
-  }, [])
-
-  const handleFullscreen = () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen()
-    } else {
-      const target = containerRef.current
-      if (target) target.requestFullscreen().catch(() => {})
-    }
-  }
-
   return (
     <div ref={containerRef} className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#000', width: '100%', height: '100%', maxWidth: '100vw', maxHeight: '100vh' }}>
       {/* Navbar */}
@@ -82,38 +65,16 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
             {name}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Fullscreen button */}
-          <button
-            onClick={handleFullscreen}
-            className="flex items-center gap-2 px-3 py-1.5 rounded transition-all"
-            style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a8888', border: '1px solid rgba(255,255,255,0.06)', textTransform: 'uppercase', letterSpacing: 1 }}
-            onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
-            onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
-          >
-            {isFullscreen ? (
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
-              </svg>
-            ) : (
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-              </svg>
-            )}
-            {isFullscreen ? 'Exit' : 'Fullscreen'}
-          </button>
-
-          <button
-            onClick={onClose}
-            className="flex items-center gap-2 px-3 py-1.5 rounded transition-all"
-            style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a8888', border: '1px solid rgba(255,255,255,0.06)', textTransform: 'uppercase', letterSpacing: 1 }}
-            onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
-            onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
-          >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            Close
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className="flex items-center gap-2 px-3 py-1.5 rounded transition-all"
+          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#4a8888', border: '1px solid rgba(255,255,255,0.06)', textTransform: 'uppercase', letterSpacing: 1 }}
+          onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
+          onMouseLeave={e => e.currentTarget.style.color = '#4a8888'}
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          Close
+        </button>
       </div>
 
       {/* Error State */}
@@ -158,7 +119,7 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
           width: '100%',
           height: '100%',
           maxWidth: '100vw',
-          maxHeight: isFullscreen ? '100vh' : 'calc(100vh - 48px)',
+          maxHeight: 'calc(100vh - 48px)',
         }}
       />
     </div>
