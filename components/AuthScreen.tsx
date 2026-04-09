@@ -120,14 +120,14 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#1a3a3a',
+                color: '#a0c4c4',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 10,
                 letterSpacing: 1,
                 textTransform: 'uppercase',
               }}
-              onMouseEnter={e => e.currentTarget.style.color = '#4a8888'}
-              onMouseLeave={e => e.currentTarget.style.color = '#1a3a3a'}
+              onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
+              onMouseLeave={e => e.currentTarget.style.color = '#a0c4c4'}
             >
               Continue as Guest
             </button>
