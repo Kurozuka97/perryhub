@@ -125,6 +125,9 @@ export default function Home() {
         isBookmarked={isBookmarked}
         uid={user?.uid || ''}
         status={status}
+        perryId={perryId}
+        authMode={authMode}
+        onLogout={logout}
       />
     </div>
   )
