@@ -16,7 +16,14 @@ interface Props {
   onLogout: () => void
 }
 
+const mono = 'JetBrains Mono, monospace'
+const display = 'Bebas Neue, sans-serif'
+
 export default function SettingsPanel({ open, onClose, settings, onSave, langs, uid, status, perryId, authMode, onLogout }: Props) {
+  const isUser = authMode === 'user' && !!perryId
+  const statusColor = status === 'online' ? '#00c9c9' : status === 'error' ? '#ff4444' : '#7ecece'
+  const statusLabel = status === 'online' ? 'Cloud Online' : status === 'error' ? 'Sync Error' : 'Connecting...'
+
   return (
     <AnimatePresence>
       {open && (
@@ -30,82 +37,93 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
             className="fixed inset-0 z-[200]"
           />
 
-          {/* Dropdown anchored to top-right, below navbar */}
+          {/* Dropdown */}
           <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            initial={{ opacity: 0, y: -10, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed right-4 top-16 z-[201] w-72 flex flex-col overflow-hidden"
+            exit={{ opacity: 0, y: -10, scale: 0.97 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 340 }}
+            className="fixed right-4 top-16 z-[201] w-80 flex flex-col overflow-hidden"
             style={{
-              background: '#0a1a1b',
-              border: '1px solid rgba(0,201,201,0.12)',
-              borderRadius: 8,
-              boxShadow: '0 24px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,201,201,0.04)',
+              background: '#081414',
+              border: '1px solid rgba(0,201,201,0.18)',
+              borderRadius: 10,
+              boxShadow: '0 32px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,201,201,0.06)',
             }}
           >
-            {/* Account Header */}
-            <div
-              className="flex flex-col items-center py-6 px-6 gap-3"
-              style={{ background: 'linear-gradient(160deg, rgba(0,201,201,0.1) 0%, transparent 100%)', borderBottom: '1px solid rgba(0,201,201,0.08)' }}
-            >
-              {/* Avatar */}
-              <div style={{
-                width: 56, height: 56, borderRadius: 14,
-                background: authMode === 'user' ? 'rgba(0,201,201,0.15)' : 'rgba(255,255,255,0.05)',
-                border: authMode === 'user' ? '1px solid rgba(0,201,201,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                {authMode === 'user' && perryId ? (
-                  <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 28, color: '#00c9c9', lineHeight: 1 }}>
-                    {perryId.charAt(0).toUpperCase()}
-                  </span>
-                ) : (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(232,245,245,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="8" r="4"/>
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                  </svg>
-                )}
-              </div>
+            {/* ── HEADER ── */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(0,201,201,0.12) 0%, rgba(0,201,201,0.03) 100%)',
+              borderBottom: '1px solid rgba(0,201,201,0.1)',
+              padding: '20px 20px 16px',
+            }}>
+              <div className="flex items-center gap-4">
+                {/* Avatar */}
+                <div style={{
+                  width: 52, height: 52, borderRadius: 12, flexShrink: 0,
+                  background: isUser ? 'rgba(0,201,201,0.12)' : 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${isUser ? 'rgba(0,201,201,0.35)' : 'rgba(255,255,255,0.1)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {isUser ? (
+                    <span style={{ fontFamily: display, fontSize: 26, color: '#00c9c9', lineHeight: 1 }}>
+                      {perryId!.charAt(0).toUpperCase()}
+                    </span>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7ecece" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                    </svg>
+                  )}
+                </div>
 
-              {/* Name + status */}
-              <div className="text-center">
-                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: '#e8f5f5', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 500 }}>
-                  {authMode === 'user' && perryId ? perryId : 'Guest'}
-                </p>
-                <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${authMode === 'user' ? 'bg-teal-400 animate-pulse' : 'bg-zinc-600'}`} />
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: authMode === 'user' ? '#00c9c9' : '#6ababa', textTransform: 'uppercase', letterSpacing: 2 }}>
-                    {authMode === 'user' ? 'Perry Hub ID · Synced' : 'Guest Session · Not Synced'}
-                  </span>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p style={{ fontFamily: display, fontSize: 20, color: '#e8f5f5', letterSpacing: 2, lineHeight: 1 }}>
+                    {isUser ? perryId!.toUpperCase() : 'GUEST'}
+                  </p>
+                  <p style={{ fontFamily: mono, fontSize: 9, color: isUser ? '#00c9c9' : '#7ecece', textTransform: 'uppercase', letterSpacing: 2, marginTop: 5 }}>
+                    {isUser ? 'Perry Hub ID' : 'Guest Session'}
+                  </p>
+
+                  {/* Sync badge */}
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <div style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: isUser ? '#00c9c9' : '#444',
+                      boxShadow: isUser ? '0 0 6px #00c9c9' : 'none',
+                    }} />
+                    <span style={{ fontFamily: mono, fontSize: 8, color: isUser ? '#00c9c9' : '#6ababa', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                      {isUser ? 'Synced' : 'Not Synced'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Vault status pill */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className={`w-1.5 h-1.5 rounded-full ${
-                  status === 'online' ? 'bg-teal-400 animate-pulse' :
-                  status === 'error' ? 'bg-red-500' : 'bg-zinc-600'
-                }`} />
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, textTransform: 'uppercase', letterSpacing: 2, color:
-                  status === 'online' ? '#00c9c9' : status === 'error' ? '#ff4444' : '#6ababa'
-                }}>
-                  {status === 'online' ? 'Cloud Online' : status === 'error' ? 'Sync Error' : 'Connecting...'}
+              {/* Vault pill */}
+              <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-md" style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: statusColor,
+                  boxShadow: status === 'online' ? `0 0 6px ${statusColor}` : 'none',
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontFamily: mono, fontSize: 9, color: statusColor, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                  {statusLabel}
                 </span>
                 {uid && (
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'rgba(232,245,245,0.25)', letterSpacing: 1 }}>
-                    · {uid.substring(0, 8)}
+                  <span style={{ fontFamily: mono, fontSize: 8, color: 'rgba(232,245,245,0.3)', letterSpacing: 1, marginLeft: 'auto' }}>
+                    {uid.substring(0, 10)}…
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Config sections */}
-            <div className="flex flex-col divide-y" style={{ borderColor: 'rgba(0,201,201,0.06)' }}>
+            {/* ── SETTINGS ── */}
+            <div style={{ borderBottom: '1px solid rgba(0,201,201,0.08)' }}>
 
-              {/* NSFW Toggle */}
-              <div className="px-4 py-3">
+              {/* NSFW */}
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <Toggle
                   enabled={settings.showNSFW}
                   onToggle={() => onSave({ showNSFW: !settings.showNSFW })}
@@ -115,26 +133,26 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
               </div>
 
               {/* Language */}
-              <div className="px-4 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div>
-                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#e8f5f5', textTransform: 'uppercase', letterSpacing: 1 }}>Language</p>
-                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 }}>Source filter</p>
+                  <p style={{ fontFamily: mono, fontSize: 11, color: '#c8e8e8', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 500 }}>Language</p>
+                  <p style={{ fontFamily: mono, fontSize: 8, color: '#5aacac', textTransform: 'uppercase', letterSpacing: 1, marginTop: 3 }}>Source filter</p>
                 </div>
                 <select
                   value={settings.prefLang}
                   onChange={(e) => onSave({ prefLang: e.target.value })}
                   className="outline-none cursor-pointer"
                   style={{
-                    background: 'rgba(0,201,201,0.06)',
-                    border: '1px solid rgba(0,201,201,0.15)',
-                    borderRadius: 4,
-                    padding: '4px 8px',
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 9,
+                    background: 'rgba(0,201,201,0.08)',
+                    border: '1px solid rgba(0,201,201,0.2)',
+                    borderRadius: 6,
+                    padding: '5px 10px',
+                    fontFamily: mono,
+                    fontSize: 10,
                     color: '#00c9c9',
                     textTransform: 'uppercase',
                     letterSpacing: 1,
-                    minWidth: 80,
+                    minWidth: 90,
                   }}
                 >
                   <option value="all">Global</option>
@@ -145,26 +163,26 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
               </div>
 
               {/* DNS */}
-              <div className="px-4 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between" style={{ padding: '12px 20px' }}>
                 <div>
-                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#e8f5f5', textTransform: 'uppercase', letterSpacing: 1 }}>DNS</p>
-                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 }}>Network provider</p>
+                  <p style={{ fontFamily: mono, fontSize: 11, color: '#c8e8e8', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 500 }}>DNS</p>
+                  <p style={{ fontFamily: mono, fontSize: 8, color: '#5aacac', textTransform: 'uppercase', letterSpacing: 1, marginTop: 3 }}>Network provider</p>
                 </div>
                 <select
                   value={settings.dnsProvider}
                   onChange={(e) => onSave({ dnsProvider: e.target.value })}
                   className="outline-none cursor-pointer"
                   style={{
-                    background: 'rgba(0,201,201,0.06)',
-                    border: '1px solid rgba(0,201,201,0.15)',
-                    borderRadius: 4,
-                    padding: '4px 8px',
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 9,
+                    background: 'rgba(0,201,201,0.08)',
+                    border: '1px solid rgba(0,201,201,0.2)',
+                    borderRadius: 6,
+                    padding: '5px 10px',
+                    fontFamily: mono,
+                    fontSize: 10,
                     color: '#00c9c9',
                     textTransform: 'uppercase',
                     letterSpacing: 1,
-                    minWidth: 80,
+                    minWidth: 90,
                   }}
                 >
                   {DNS_OPTIONS.map(opt => (
@@ -174,15 +192,25 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
               </div>
             </div>
 
-            {/* Footer actions */}
-            <div className="p-3 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(0,201,201,0.08)' }}>
+            {/* ── FOOTER ── */}
+            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {authMode === 'user' && (
                 <button
                   onClick={() => { onLogout(); onClose() }}
-                  className="w-full py-2 rounded transition-all"
-                  style={{ border: '1px solid rgba(255,68,68,0.2)', color: '#ff4444', background: 'transparent', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,68,68,0.06)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  className="w-full rounded-md transition-all"
+                  style={{
+                    padding: '10px 0',
+                    border: '1px solid rgba(255,68,68,0.25)',
+                    color: '#ff6060',
+                    background: 'rgba(255,68,68,0.05)',
+                    fontFamily: mono,
+                    fontSize: 10,
+                    letterSpacing: 2,
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(255,68,68,0.4)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,68,68,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,68,68,0.25)' }}
                 >
                   Logout
                 </button>
@@ -190,20 +218,40 @@ export default function SettingsPanel({ open, onClose, settings, onSave, langs, 
               {authMode === 'guest' && (
                 <button
                   onClick={() => { onLogout(); onClose() }}
-                  className="w-full py-2 rounded transition-all"
-                  style={{ border: '1px solid rgba(0,201,201,0.15)', color: '#00c9c9', background: 'transparent', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,201,201,0.05)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  className="w-full rounded-md transition-all"
+                  style={{
+                    padding: '10px 0',
+                    border: '1px solid rgba(0,201,201,0.25)',
+                    color: '#00c9c9',
+                    background: 'rgba(0,201,201,0.06)',
+                    fontFamily: mono,
+                    fontSize: 10,
+                    letterSpacing: 2,
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,201,201,0.12)'; e.currentTarget.style.borderColor = 'rgba(0,201,201,0.4)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,201,201,0.06)'; e.currentTarget.style.borderColor = 'rgba(0,201,201,0.25)' }}
                 >
                   Leave Guest
                 </button>
               )}
               <button
                 onClick={onClose}
-                className="w-full py-2 rounded transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(232,245,245,0.4)', background: 'transparent', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' }}
+                className="w-full rounded-md transition-all"
+                style={{
+                  padding: '8px 0',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  color: 'rgba(232,245,245,0.5)',
+                  background: 'transparent',
+                  fontFamily: mono,
+                  fontSize: 9,
+                  letterSpacing: 2,
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                }}
                 onMouseEnter={e => { e.currentTarget.style.color = '#e8f5f5'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)' }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(232,245,245,0.4)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(232,245,245,0.5)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)' }}
               >
                 Close
               </button>
