@@ -8,12 +8,14 @@ import { useRepos } from '@/hooks/useRepos'
 import { Source } from '@/lib/types'
 
 type SourceStatus = 'idle' | 'loading' | 'live' | 'error'
+type VaultTab = 'manga' | 'anime' | 'alternative' | 'iptv' | 'bookmarks'
 
 export default function Home() {
   const { user, settings, saveSettings, status, toggleBookmark, isBookmarked, addRecent } = useFirebase()
   const { repos, loading } = useRepos()
 
   const [vaultOpen, setVaultOpen] = useState(false)
+  const [vaultInitialTab, setVaultInitialTab] = useState<VaultTab>('manga')
   const [frameUrl, setFrameUrl] = useState('')
   const [sourceName, setSourceName] = useState('')
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>('idle')
@@ -57,10 +59,16 @@ export default function Home() {
     toggleBookmark(source)
   }, [toggleBookmark])
 
+  const handleOpenVaultTab = useCallback((tab: VaultTab) => {
+    setVaultInitialTab(tab)
+    setVaultOpen(true)
+  }, [])
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <Navbar
-        onOpenVault={() => setVaultOpen(true)}
+        onOpenVault={() => handleOpenVaultTab('manga')}
+        onOpenVaultTab={handleOpenVaultTab}
         frameActive={!!frameUrl}
         onHome={handleHome}
         sourceName={sourceName}
@@ -79,7 +87,7 @@ export default function Home() {
           />
         ) : (
           <HomeScreen
-            onOpenVault={() => setVaultOpen(true)}
+            onOpenVault={() => handleOpenVaultTab('manga')}
             mangaSources={repos.manga}
             animeSources={repos.anime}
             altSources={repos.alternative}
@@ -92,6 +100,7 @@ export default function Home() {
       <VaultModal
         open={vaultOpen}
         onClose={() => setVaultOpen(false)}
+        initialTab={vaultInitialTab}
         repos={repos}
         loading={loading}
         settings={settings}
