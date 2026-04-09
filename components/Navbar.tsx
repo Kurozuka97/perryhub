@@ -117,8 +117,8 @@ export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHom
           className="flex items-center gap-2 px-3 py-2 rounded transition-all"
           style={{
             background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.06)',
-            color: authMode === 'user' ? '#00c9c9' : 'rgba(232,245,245,0.75)',
+            border: '1px solid rgba(0,201,201,0.25)',
+            color: '#00c9c9',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: 10,
             letterSpacing: 1,
@@ -129,8 +129,8 @@ export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHom
             e.currentTarget.style.color = '#00c9c9'
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
-            e.currentTarget.style.color = authMode === 'user' ? '#00c9c9' : 'rgba(232,245,245,0.4)'
+            e.currentTarget.style.borderColor = 'rgba(0,201,201,0.25)'
+            e.currentTarget.style.color = '#00c9c9'
           }}
         >
           {authMode === 'user' && perryId ? (
