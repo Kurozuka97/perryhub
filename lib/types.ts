@@ -58,6 +58,7 @@ export const REPO_URLS: Record<Tab, string[]> = {
   ],
   anime: [
     'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Anime.json',
+    'https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/refs/heads/main/anime_index.json',
   ],
   alternative: [
     'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Alternative.json',
