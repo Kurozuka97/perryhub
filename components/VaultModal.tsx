@@ -32,6 +32,16 @@ const TABS: { id: ActiveTab; label: string }[] = [
 
 type SortOption = 'default' | 'name' | 'lang' | 'version'
 
+interface SourceWithTab extends Source {
+  _tab: Tab
+}
+
+const TAB_COLOURS: Record<Tab, string> = {
+  manga: '#ff8c42',
+  anime: '#00c9c9',
+  alternative: '#a78bfa',
+}
+
 function fuzzyMatch(str: string, query: string): boolean {
   if (!query) return true
   const s = str.toLowerCase()
@@ -55,14 +65,32 @@ export default function VaultModal({ open, onClose, repos, loading, settings, on
   const [sort, setSort] = useState<SortOption>('default')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
+  const isSearching = search.trim().length > 0
+
   const langs = useMemo(() => {
     if (activeTab === 'bookmarks' || activeTab === 'iptv') return []
     const data = repos[activeTab as Tab] || []
     return Array.from(new Set(data.map(s => s.lang).filter(Boolean))).sort()
   }, [repos, activeTab])
 
+  // Cross-tab search across manga + anime + alternative
+  const crossTabResults = useMemo((): SourceWithTab[] => {
+    if (!isSearching) return []
+    const allTabs: Tab[] = ['manga', 'anime', 'alternative']
+    return allTabs.flatMap(tab =>
+      (repos[tab] || [])
+        .filter(s => {
+          const matchSearch = fuzzyMatch(s.name, search)
+          const matchNSFW = settings.showNSFW || !s.nsfw
+          return matchSearch && matchNSFW
+        })
+        .map(s => ({ ...s, _tab: tab }))
+    )
+  }, [repos, search, isSearching, settings.showNSFW])
+
+  // Per-tab filtered results
   const filtered = useMemo(() => {
-    if (activeTab === 'iptv') return []
+    if (isSearching || activeTab === 'iptv') return []
     let data: Source[] = activeTab === 'bookmarks'
       ? (settings.bookmarks || []).map(bookmarkToSource)
       : repos[activeTab as Tab] || []
@@ -79,7 +107,7 @@ export default function VaultModal({ open, onClose, repos, loading, settings, on
     else if (sort === 'version') result = [...result].sort((a, b) => (b.version || '0').localeCompare(a.version || '0'))
 
     return result
-  }, [repos, activeTab, search, sort, settings.prefLang, settings.showNSFW, settings.bookmarks])
+  }, [repos, activeTab, search, sort, settings.prefLang, settings.showNSFW, settings.bookmarks, isSearching])
 
   const counts: Record<ActiveTab, number | undefined> = {
     manga: repos.manga.length,
@@ -135,29 +163,31 @@ export default function VaultModal({ open, onClose, repos, loading, settings, on
               </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex items-end gap-0" style={{ borderBottom: '1px solid rgba(0,201,201,0.06)' }}>
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="relative px-5 py-3 transition-colors"
-                  style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: activeTab === tab.id ? '#00c9c9' : '#4a8888' }}
-                >
-                  {tab.label}
-                  {counts[tab.id] !== undefined && (
-                    <span style={{ marginLeft: 6, fontSize: 8, opacity: 0.4 }}>{counts[tab.id]}</span>
-                  )}
-                  {activeTab === tab.id && (
-                    <motion.div layoutId="vault-tab-line" className="absolute bottom-0 left-0 right-0" style={{ height: 2, background: '#00c9c9' }} />
-                  )}
-                </button>
-              ))}
-            </div>
+            {/* Tabs — hidden when searching */}
+            {!isSearching && (
+              <div className="flex items-end gap-0" style={{ borderBottom: '1px solid rgba(0,201,201,0.06)' }}>
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="relative px-5 py-3 transition-colors"
+                    style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: activeTab === tab.id ? '#00c9c9' : '#4a8888' }}
+                  >
+                    {tab.label}
+                    {counts[tab.id] !== undefined && (
+                      <span style={{ marginLeft: 6, fontSize: 8, opacity: 0.4 }}>{counts[tab.id]}</span>
+                    )}
+                    {activeTab === tab.id && (
+                      <motion.div layoutId="vault-tab-line" className="absolute bottom-0 left-0 right-0" style={{ height: 2, background: '#00c9c9' }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* IPTV Tab — full takeover */}
-          {activeTab === 'iptv' ? (
+          {activeTab === 'iptv' && !isSearching ? (
             <IPTVTab />
           ) : (
             <>
@@ -169,7 +199,7 @@ export default function VaultModal({ open, onClose, repos, loading, settings, on
                     type="text"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Search archives..."
+                    placeholder={isSearching ? 'Searching all sources...' : 'Search archives...'}
                     className="flex-1 bg-transparent outline-none uppercase"
                     style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#e8f5f5' }}
                   />
@@ -180,38 +210,80 @@ export default function VaultModal({ open, onClose, repos, loading, settings, on
                   )}
                 </div>
 
-                <select
-                  value={sort}
-                  onChange={e => setSort(e.target.value as SortOption)}
-                  className="rounded outline-none cursor-pointer uppercase"
-                  style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#4a8888' }}
-                >
-                  <option value="default">Default</option>
-                  <option value="name">A–Z</option>
-                  <option value="lang">Lang</option>
-                  <option value="version">Version</option>
-                </select>
+                {!isSearching && (
+                  <>
+                    <select
+                      value={sort}
+                      onChange={e => setSort(e.target.value as SortOption)}
+                      className="rounded outline-none cursor-pointer uppercase"
+                      style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#4a8888' }}
+                    >
+                      <option value="default">Default</option>
+                      <option value="name">A–Z</option>
+                      <option value="lang">Lang</option>
+                      <option value="version">Version</option>
+                    </select>
 
-                {activeTab !== 'bookmarks' && (
-                  <select
-                    value={settings.prefLang}
-                    onChange={e => onSave({ prefLang: e.target.value })}
-                    className="rounded outline-none cursor-pointer uppercase"
-                    style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#4a8888' }}
-                  >
-                    <option value="all">All</option>
-                    {langs.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
-                  </select>
+                    {activeTab !== 'bookmarks' && (
+                      <select
+                        value={settings.prefLang}
+                        onChange={e => onSave({ prefLang: e.target.value })}
+                        className="rounded outline-none cursor-pointer uppercase"
+                        style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.1)', padding: '6px 10px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#4a8888' }}
+                      >
+                        <option value="all">All</option>
+                        {langs.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
+                      </select>
+                    )}
+                  </>
                 )}
 
                 <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#1a3a3a', flexShrink: 0 }}>
-                  {filtered.length} sources
+                  {isSearching ? `${crossTabResults.length} results` : `${filtered.length} sources`}
                 </span>
               </div>
 
               {/* Grid */}
               <div className="flex-1 overflow-y-auto px-8 py-6">
-                {loading && activeTab !== 'bookmarks' ? (
+                {isSearching ? (
+                  crossTabResults.length === 0 ? (
+                    <div className="flex items-center justify-center h-48">
+                      <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#1a3a3a', textTransform: 'uppercase', letterSpacing: 2 }}>
+                        No results
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                      {crossTabResults.map((source, i) => {
+                        const url = source.sources?.[0]?.baseUrl || source.baseUrl || '#'
+                        return (
+                          <div key={`${source.name}-${i}`} className="relative">
+                            <div
+                              className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded"
+                              style={{
+                                fontFamily: 'JetBrains Mono, monospace',
+                                fontSize: 7,
+                                textTransform: 'uppercase',
+                                letterSpacing: 1,
+                                color: '#060d0e',
+                                background: TAB_COLOURS[source._tab],
+                              }}
+                            >
+                              {source._tab}
+                            </div>
+                            <SourceCard
+                              source={source}
+                              index={i}
+                              onSelect={(url, name) => { onSelect(url, name); onClose() }}
+                              onBookmark={onBookmark}
+                              bookmarked={isBookmarked(url)}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                ) : loading && activeTab !== 'bookmarks' ? (
                   <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
                     {Array.from({ length: 12 }).map((_, i) => (
                       <div key={i} className="h-24 rounded animate-pulse" style={{ background: '#0a1a1b' }} />
