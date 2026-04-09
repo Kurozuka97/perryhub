@@ -55,6 +55,7 @@ export const DNS_OPTIONS = [
 export const REPO_URLS: Record<Tab, string[]> = {
   manga: [
     'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Manga.json',
+     'https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/refs/heads/main/index.json',
   ],
   anime: [
     'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Anime.json',
