@@ -10,9 +10,12 @@ interface Props {
   sourceName: string
   sourceStatus: 'idle' | 'loading' | 'live' | 'error'
   frameUrl?: string
+  authMode: 'loading' | 'auth' | 'guest' | 'user'
+  perryId: string | null
+  onOpenSettings: () => void
 }
 
-export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHome, sourceName, sourceStatus, frameUrl }: Props) {
+export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHome, sourceName, sourceStatus, frameUrl, authMode, perryId, onOpenSettings }: Props) {
   const statusColor = {
     idle: '#1a3a3a',
     loading: '#ff8c42',
@@ -107,6 +110,51 @@ export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHom
             Open in Tab
           </button>
         )}
+
+        {/* Account chip */}
+        <button
+          onClick={onOpenSettings}
+          className="flex items-center gap-2 px-3 py-2 rounded transition-all"
+          style={{
+            background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.06)',
+            color: authMode === 'user' ? '#00c9c9' : 'rgba(232,245,245,0.4)',
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: 1,
+            textTransform: 'uppercase',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'rgba(0,201,201,0.25)'
+            e.currentTarget.style.color = '#00c9c9'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+            e.currentTarget.style.color = authMode === 'user' ? '#00c9c9' : 'rgba(232,245,245,0.4)'
+          }}
+        >
+          {authMode === 'user' && perryId ? (
+            <>
+              <div style={{
+                width: 16, height: 16, borderRadius: 3, flexShrink: 0,
+                background: 'rgba(0,201,201,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'Bebas Neue, sans-serif', fontSize: 11, color: '#00c9c9',
+              }}>
+                {perryId.charAt(0).toUpperCase()}
+              </div>
+              <span>{perryId}</span>
+            </>
+          ) : (
+            <>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+              <span>Guest</span>
+            </>
+          )}
+        </button>
 
         <button
           onClick={onOpenVault}
