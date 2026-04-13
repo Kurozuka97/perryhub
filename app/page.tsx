@@ -183,6 +183,7 @@ export default function Home() {
           <HomeScreen
             onOpenVault={() => setVaultOpen(true)}
             mangaSources={repos.manga}
+            onOpenVaultTab={handleOpenVaultTab}
             animeSources={repos.anime}
             altSources={repos.alternative}
             onSelect={handleSelect}
