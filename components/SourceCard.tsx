@@ -14,7 +14,7 @@ interface Props {
 }
 
 const BADGE: Record<SourceHealthStatus, { dot: string; text: string; label: string }> = {
-  checking: { dot: '#6ababa', text: '#6ababa', label: 'Checking…' },
+  checking: { dot: '#3b82f6', text: '#6ababa', label: 'Checking…' },
   ok:       { dot: '#4ade80', text: '#4ade80', label: 'Works directly' },
   blocked:  { dot: '#facc15', text: '#facc15', label: 'Needs ext. browser' },
   dead:     { dot: '#f87171', text: '#f87171', label: 'Dead link' },
