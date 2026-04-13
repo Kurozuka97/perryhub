@@ -7,10 +7,11 @@ import {
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')
+  const dnsProvider = req.nextUrl.searchParams.get('dns') || undefined
 
   try {
     // No allowlist — private IP / SSRF protection still applies inside fetchProxyPayload.
-    const payload = await fetchProxyPayload(url || '', fetch)
+    const payload = await fetchProxyPayload(url || '', fetch, { dnsProvider })
 
     return new NextResponse(payload.body, {
       status: payload.status,
