@@ -263,6 +263,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                             <SourceCard
                               source={source}
                               index={i}
+                              tab={source._tab}
                               onSelect={(url, name) => { onSelect(url, name); onClose() }}
                               onBookmark={onBookmark}
                               bookmarked={isBookmarked(url)}
@@ -298,6 +299,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
                           key={`${source.name}-${i}`}
                           source={source}
                           index={i}
+                          tab={activeTab}
                           onSelect={(url, name) => { onSelect(url, name); onClose() }}
                           onBookmark={onBookmark}
                           bookmarked={isBookmarked(url)}
