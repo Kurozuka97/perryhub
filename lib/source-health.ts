@@ -25,6 +25,27 @@ function dequeue() {
   }
 }
 
+// Proxy error codes that mean the site is alive but requires a real browser
+const BLOCKED_CODES = new Set([
+  'UPSTREAM_BROWSER_VERIFICATION_REQUIRED',
+  'UPSTREAM_ACCESS_DENIED',
+  'UPSTREAM_RATE_LIMITED',
+  'UPSTREAM_LOGIN_REQUIRED',
+])
+
+// Proxy error codes that mean the site is genuinely unreachable
+const DEAD_CODES = new Set([
+  'UPSTREAM_NOT_FOUND',
+  'UPSTREAM_UNAVAILABLE',
+  'UPSTREAM_SITE_ERROR',
+  'UPSTREAM_HTTP_ERROR',
+  'UPSTREAM_DNS_ERROR',
+  'UPSTREAM_CONNECTION_ERROR',
+  'UPSTREAM_TIMEOUT',
+  'UPSTREAM_TLS_ERROR',
+  'UPSTREAM_FETCH_FAILED',
+])
+
 const CF_SIGNATURES = [
   'just a moment',
   'cf-browser-verification',
@@ -66,22 +87,28 @@ export function checkSourceHealth(
       const res = await fetch(proxyUrl, { signal: controller.signal })
       clearTimeout(timer)
 
-      if (!res.ok) {
-        const status: SourceHealthStatus = res.status >= 400 ? 'dead' : 'blocked'
-        cache.set(url, status)
-        onResult(status)
+      // Check proxy error code header first — most reliable signal
+      const proxyErrorCode = res.headers.get('X-Proxy-Error-Code') || ''
+
+      if (BLOCKED_CODES.has(proxyErrorCode)) {
+        cache.set(url, 'blocked')
+        onResult('blocked')
         return
       }
 
-      // Check proxy-level error header first
-      const proxyStatus = res.headers.get('X-Proxy-Status')
-      const proxyError = res.headers.get('X-Proxy-Error-Code')
-      if (proxyStatus === 'error' || proxyError) {
+      if (DEAD_CODES.has(proxyErrorCode)) {
         cache.set(url, 'dead')
         onResult('dead')
         return
       }
 
+      if (!res.ok) {
+        cache.set(url, 'dead')
+        onResult('dead')
+        return
+      }
+
+      // No error code — read body to check for JS challenge pages
       const text = await res.text()
       const status: SourceHealthStatus = isBlocked(text) ? 'blocked' : 'ok'
       cache.set(url, status)
