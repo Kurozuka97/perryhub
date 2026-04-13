@@ -18,7 +18,6 @@ const SOURCES = [
     label: 'Pluto TV',
     url: 'https://i.mjh.nz/PlutoTV/all.m3u8',
   },
-  [
   {
     "id": "iptv-org-master",
     "label": "IPTV-org Master List (8,000+ channels)",
