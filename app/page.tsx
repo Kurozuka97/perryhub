@@ -85,7 +85,8 @@ export default function Home() {
         const controller = new AbortController()
         let errorCode = ''
         try {
-          const res = await fetch(`/api/proxy?url=${encodeURIComponent(url)}`, {
+          const dnsParam = settings.dnsProvider ? `&dns=${encodeURIComponent(settings.dnsProvider)}` : ''
+          const res = await fetch(`/api/proxy?url=${encodeURIComponent(url)}${dnsParam}`, {
             signal: controller.signal,
           })
           errorCode = res.headers.get('x-proxy-error-code') || ''
@@ -103,7 +104,8 @@ export default function Home() {
 
     // Set both together — iframe gets correct src on first render, no flash
     setIsDirect(direct)
-    setIframeSrc(direct ? url : `/api/proxy?url=${encodeURIComponent(url)}`)
+    const dnsQuery = settings.dnsProvider ? `&dns=${encodeURIComponent(settings.dnsProvider)}` : ''
+    setIframeSrc(direct ? url : `/api/proxy?url=${encodeURIComponent(url)}${dnsQuery}`)
   }, [saveSettings, addRecent, repos])
 
   const handleHome = useCallback(() => {
