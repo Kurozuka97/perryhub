@@ -2,7 +2,7 @@ const HTML_CONTENT_TYPES = new Set(['text/html', 'application/xhtml+xml'])
 const REQUEST_TIMEOUT_MS = 15_000
 const MAX_REDIRECT_HOPS = 5
 const DEFAULT_USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 const PROXY_RUNTIME_ATTRIBUTE = 'data-perry-proxy-runtime'
 const PROXY_ENDPOINT_PREFIX = '/api/proxy?url='
 
@@ -302,14 +302,28 @@ function classifyUpstreamFailure(
   if (
     marker === 'cloudflare' ||
     marker === 'captcha' ||
-    marker === 'ddos-guard' ||
-    status === 403 ||
-    status === 429
+    marker === 'ddos-guard'
   ) {
     return new ProxyRequestError(
       403,
       'UPSTREAM_BROWSER_VERIFICATION_REQUIRED',
       'Source blocked automated access. Use Open in Tab.',
+    )
+  }
+
+  if (status === 429) {
+    return new ProxyRequestError(
+      429,
+      'UPSTREAM_RATE_LIMITED',
+      'Source is rate limiting this proxy. Try again later.',
+    )
+  }
+
+  if (status === 403) {
+    return new ProxyRequestError(
+      403,
+      'UPSTREAM_ACCESS_DENIED',
+      'Source denied access. Try Open in Tab.',
     )
   }
 
@@ -411,7 +425,11 @@ export async function fetchProxyPayload(
       signal: controller.signal,
       headers: {
         'User-Agent': DEFAULT_USER_AGENT,
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        'Upgrade-Insecure-Requests': '1',
       },
     })
 
