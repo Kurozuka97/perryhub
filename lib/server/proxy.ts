@@ -59,6 +59,31 @@ export function isPrivateAddress(hostname: string): boolean {
   )
 }
 
+// --- DoH resolver ---
+
+const DOH_CACHE = new Map<string, string>()
+
+async function resolveViaDoH(hostname: string, dohUrl: string): Promise<string | null> {
+  const cacheKey = `${dohUrl}|${hostname}`
+  if (DOH_CACHE.has(cacheKey)) return DOH_CACHE.get(cacheKey)!
+
+  try {
+    const url = `${dohUrl}?name=${encodeURIComponent(hostname)}&type=A`
+    const res = await fetch(url, {
+      headers: { Accept: 'application/dns-json' },
+      signal: AbortSignal.timeout(4000),
+    })
+    if (!res.ok) return null
+    const data = await res.json() as { Answer?: { type: number; data: string }[] }
+    const ip = data.Answer?.find(r => r.type === 1)?.data ?? null
+    if (ip) DOH_CACHE.set(cacheKey, ip)
+    return ip
+  } catch {
+    return null
+  }
+}
+
+
 // --- Error class ---
 
 export class ProxyRequestError extends Error {
@@ -83,6 +108,7 @@ export interface ProxyPayload {
 
 interface ProxyOptions {
   allowedHosts?: Set<string>
+  dnsProvider?: string
 }
 
 // --- URL parsing ---
@@ -418,9 +444,20 @@ export async function fetchProxyPayload(
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
   try {
+    // Resolve hostname via DoH if configured
+    let fetchTarget: string | URL = initial
+    if (options.dnsProvider) {
+      const ip = await resolveViaDoH(initial.hostname, options.dnsProvider)
+      if (ip) {
+        const resolved = new URL(initial.toString())
+        resolved.hostname = ip
+        fetchTarget = resolved
+      }
+    }
+
     // Follow redirects automatically; Node.js fetch follows by default.
     // We validate the final URL after the response arrives.
-    const response = await fetchImpl(initial, {
+    const response = await fetchImpl(fetchTarget, {
       redirect: 'follow',
       signal: controller.signal,
       headers: {
