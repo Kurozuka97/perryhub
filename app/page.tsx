@@ -13,6 +13,14 @@ import { detectEmbeddedProxyIssue } from '@/lib/embed-detection'
 type SourceStatus = 'idle' | 'loading' | 'live' | 'error'
 type VaultTab = 'manga' | 'anime' | 'alternative' | 'iptv' | 'bookmarks'
 
+// Error codes from the proxy that mean the site blocked server-side access.
+// For these we silently fall back to a direct iframe load instead of showing an error.
+const PROXY_FALLBACK_CODES = new Set([
+  'UPSTREAM_BROWSER_VERIFICATION_REQUIRED',
+  'UPSTREAM_ACCESS_DENIED',
+  'UPSTREAM_RATE_LIMITED',
+])
+
 export default function Home() {
   const {
     user, settings, saveSettings, status,
@@ -26,6 +34,8 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [vaultInitialTab, setVaultInitialTab] = useState<VaultTab>('manga')
   const [frameUrl, setFrameUrl] = useState('')
+  const [rawUrl, setRawUrl] = useState('') // original URL before proxy wrapping
+  const [isDirect, setIsDirect] = useState(false) // true = bypassing proxy
   const [sourceName, setSourceName] = useState('')
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>('idle')
   const [embedIssue, setEmbedIssue] = useState('')
@@ -33,6 +43,8 @@ export default function Home() {
 
   const handleSelect = useCallback(async (url: string, name: string) => {
     if (!url || url === '#') return
+    setRawUrl(url)
+    setIsDirect(false)
     setFrameUrl(url)
     setSourceName(name)
     setSourceStatus('loading')
@@ -52,6 +64,8 @@ export default function Home() {
 
   const handleHome = useCallback(() => {
     setFrameUrl('')
+    setRawUrl('')
+    setIsDirect(false)
     setSourceName('')
     setSourceStatus('idle')
     setEmbedIssue('')
@@ -68,8 +82,26 @@ export default function Home() {
 
     try {
       const doc = iframe.contentDocument
-      const issue = detectEmbeddedProxyIssue(doc?.title || '', doc?.body?.innerText || '')
+      const title = doc?.title || ''
+      const bodyText = doc?.body?.innerText || ''
 
+      // Check if the proxy returned a block error page — if so, sniff the error
+      // code out of the page and decide whether to fall back to direct load.
+      if (!isDirect && title === 'Proxy unavailable') {
+        const errorCode = bodyText.match(/·\s*([A-Z_]+)$/m)?.[1] || ''
+        if (PROXY_FALLBACK_CODES.has(errorCode)) {
+          // Silently retry as a direct iframe load
+          setIsDirect(true)
+          setFrameUrl(rawUrl)
+          return
+        }
+        // Any other proxy error — show the overlay
+        setEmbedIssue(bodyText.trim() || 'Proxy error. Use Open in Tab.')
+        setSourceStatus('error')
+        return
+      }
+
+      const issue = detectEmbeddedProxyIssue(title, bodyText)
       if (issue) {
         setEmbedIssue(issue)
         setSourceStatus('error')
@@ -81,7 +113,7 @@ export default function Home() {
 
     setEmbedIssue('')
     setSourceStatus('live')
-  }, [])
+  }, [isDirect, rawUrl])
 
   const handleOpenVaultTab = useCallback((tab: VaultTab) => {
     setVaultInitialTab(tab)
@@ -134,7 +166,7 @@ export default function Home() {
           <>
             <iframe
               ref={iframeRef}
-              src={`/api/proxy?url=${encodeURIComponent(frameUrl)}`}
+              src={isDirect ? frameUrl : `/api/proxy?url=${encodeURIComponent(frameUrl)}`}
               onLoad={handleFrameLoad}
               className={`w-full h-full ${embedIssue ? 'pointer-events-none opacity-0' : ''}`}
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
@@ -161,7 +193,7 @@ export default function Home() {
                     {embedIssue}
                   </p>
                   <button
-                    onClick={() => window.open(frameUrl, '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(rawUrl || frameUrl, '_blank', 'noopener,noreferrer')}
                     className="px-4 py-2 rounded transition-all"
                     style={{
                       background: 'rgba(0,201,201,0.12)',
