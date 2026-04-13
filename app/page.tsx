@@ -37,6 +37,8 @@ export default function Home() {
   const [vaultOpen, setVaultOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [vaultInitialTab, setVaultInitialTab] = useState<VaultTab>('manga')
+  // iframeSrc is the fully-resolved URL set only after proxy/direct decision is made
+  const [iframeSrc, setIframeSrc] = useState('')
   const [frameUrl, setFrameUrl] = useState('')
   const [rawUrl, setRawUrl] = useState('')
   const [isDirect, setIsDirect] = useState(false)
@@ -48,11 +50,11 @@ export default function Home() {
   const handleSelect = useCallback(async (url: string, name: string) => {
     if (!url || url === '#') return
 
-    // Reset state — hold iframe on about:blank (invisible) while pre-check runs.
-    // No spinner, no loading UI — completely silent to the user.
+    // Reset — keep iframe hidden on about:blank while we decide proxy vs direct
     setRawUrl(url)
+    setFrameUrl(url)
+    setIframeSrc('about:blank')
     setIsDirect(false)
-    setFrameUrl('about:blank')
     setSourceName(name)
     setSourceStatus('loading')
     setEmbedIssue('')
@@ -68,15 +70,17 @@ export default function Home() {
       pkg: matched?.pkg,
     }).catch(() => {})
 
-    // Auto-skip proxy for non-https URLs — no pre-check needed
+    // Decide proxy vs direct — fully resolve before touching the iframe
+    let direct = false
+
     let parsedProtocol = ''
     try { parsedProtocol = new URL(url).protocol } catch { /* invalid url */ }
 
     if (parsedProtocol !== 'https:') {
-      setIsDirect(true)
+      // Non-https — always direct, skip pre-check entirely
+      direct = true
     } else {
-      // Silent proxy pre-check — only reads headers, never shows anything to the user.
-      // Decides proxy vs direct before the iframe ever gets a URL.
+      // Silent proxy pre-check — only reads headers, never shows anything to the user
       try {
         const controller = new AbortController()
         let errorCode = ''
@@ -85,25 +89,25 @@ export default function Home() {
             signal: controller.signal,
           })
           errorCode = res.headers.get('x-proxy-error-code') || ''
-          controller.abort() // don't download the body
+          controller.abort()
         } catch (err: unknown) {
-          // Our own abort — expected and fine
           if (!(err instanceof DOMException && err.name === 'AbortError')) throw err
         }
         if (PROXY_FALLBACK_CODES.has(errorCode)) {
-          setIsDirect(true)
+          direct = true
         }
       } catch {
-        // Network failure — fall back to direct
-        setIsDirect(true)
+        direct = true
       }
     }
 
-    // Now set the real URL — iframe appears with correct src already decided
-    setFrameUrl(url)
+    // Set both together — iframe gets correct src on first render, no flash
+    setIsDirect(direct)
+    setIframeSrc(direct ? url : `/api/proxy?url=${encodeURIComponent(url)}`)
   }, [saveSettings, addRecent, repos])
 
   const handleHome = useCallback(() => {
+    setIframeSrc('')
     setFrameUrl('')
     setRawUrl('')
     setIsDirect(false)
@@ -188,9 +192,9 @@ export default function Home() {
           <>
             <iframe
               ref={iframeRef}
-              src={isDirect ? frameUrl : `/api/proxy?url=${encodeURIComponent(frameUrl)}`}
+              src={iframeSrc}
               onLoad={handleFrameLoad}
-              className={`w-full h-full ${embedIssue || frameUrl === 'about:blank' ? 'pointer-events-none opacity-0' : ''}`}
+              className={`w-full h-full ${embedIssue || iframeSrc === 'about:blank' ? 'pointer-events-none opacity-0' : ''}`}
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
