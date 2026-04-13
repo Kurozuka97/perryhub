@@ -2,7 +2,7 @@
 import { Source, Tab } from '@/lib/types'
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { checkSourceHealth, SourceHealthStatus } from '@/lib/source-health'
+import { checkSourceHealth, recheckSourceHealth, SourceHealthStatus } from '@/lib/source-health'
 
 interface Props {
   source: Source
@@ -16,11 +16,12 @@ interface Props {
 const BADGE: Record<SourceHealthStatus, { dot: string; text: string; label: string }> = {
   checking: { dot: '#3b82f6', text: '#6ababa', label: 'Checking…' },
   ok:       { dot: '#4ade80', text: '#4ade80', label: 'Works directly' },
+  slow:     { dot: '#fb923c', text: '#fb923c', label: 'Slow response' },
   blocked:  { dot: '#facc15', text: '#facc15', label: 'Needs ext. browser' },
   dead:     { dot: '#f87171', text: '#f87171', label: 'Dead link' },
 }
 
-function HealthBadge({ status }: { status: SourceHealthStatus }) {
+function HealthBadge({ status, onRecheck }: { status: SourceHealthStatus; onRecheck: () => void }) {
   const b = BADGE[status]
   return (
     <div className="flex items-center gap-1" style={{ marginTop: 6 }}>
@@ -41,6 +42,27 @@ function HealthBadge({ status }: { status: SourceHealthStatus }) {
       }}>
         {b.label}
       </span>
+      {status !== 'checking' && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRecheck() }}
+          style={{
+            marginLeft: 4,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            opacity: 0.4,
+            lineHeight: 1,
+          }}
+          title="Recheck"
+        >
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={b.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 4v6h-6"/>
+            <path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
@@ -53,6 +75,11 @@ export default function SourceCard({ source, index, tab, onSelect, onBookmark, b
   const [health, setHealth] = useState<SourceHealthStatus | null>(
     tab === 'anime' ? 'checking' : null
   )
+
+  const handleRecheck = () => {
+    setHealth('checking')
+    recheckSourceHealth(url, setHealth)
+  }
 
   useEffect(() => {
     if (tab !== 'anime') return
@@ -134,7 +161,7 @@ export default function SourceCard({ source, index, tab, onSelect, onBookmark, b
           </p>
 
           {/* Health badge — anime only */}
-          {health && <HealthBadge status={health} />}
+          {health && <HealthBadge status={health} onRecheck={handleRecheck} />}
 
           {/* Spacer when no badge */}
           {!health && <div style={{ marginBottom: 0 }} />}
