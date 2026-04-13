@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllowedProxyHosts, registerAllowedProxyHost } from '@/lib/server/source-registry'
 import {
   ProxyRequestError,
   fetchProxyPayload,
@@ -10,9 +9,8 @@ export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')
 
   try {
-    const allowedHosts = await getAllowedProxyHosts()
-    const payload = await fetchProxyPayload(url || '', fetch, { allowedHosts })
-    registerAllowedProxyHost(new URL(payload.upstreamUrl).hostname)
+    // No allowlist — private IP / SSRF protection still applies inside fetchProxyPayload.
+    const payload = await fetchProxyPayload(url || '', fetch)
 
     return new NextResponse(payload.body, {
       status: payload.status,
