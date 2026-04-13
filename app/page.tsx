@@ -13,8 +13,8 @@ import { detectEmbeddedProxyIssue } from '@/lib/embed-detection'
 type SourceStatus = 'idle' | 'loading' | 'live' | 'error'
 type VaultTab = 'manga' | 'anime' | 'alternative' | 'iptv' | 'bookmarks'
 
-// Error codes from the proxy that mean the site blocked server-side access.
-// For these we silently fall back to a direct iframe load instead of showing an error.
+// Proxy error codes that mean the site blocks server-side access.
+// Silently fall back to direct iframe — no UI shown during the check.
 const PROXY_FALLBACK_CODES = new Set([
   'UPSTREAM_BROWSER_VERIFICATION_REQUIRED',
   'UPSTREAM_ACCESS_DENIED',
@@ -35,8 +35,8 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [vaultInitialTab, setVaultInitialTab] = useState<VaultTab>('manga')
   const [frameUrl, setFrameUrl] = useState('')
-  const [rawUrl, setRawUrl] = useState('') // original URL before proxy wrapping
-  const [isDirect, setIsDirect] = useState(false) // true = bypassing proxy
+  const [rawUrl, setRawUrl] = useState('')
+  const [isDirect, setIsDirect] = useState(false)
   const [sourceName, setSourceName] = useState('')
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>('idle')
   const [embedIssue, setEmbedIssue] = useState('')
@@ -44,17 +44,18 @@ export default function Home() {
 
   const handleSelect = useCallback(async (url: string, name: string) => {
     if (!url || url === '#') return
+
+    // Reset state — hold iframe on about:blank (invisible) while pre-check runs.
+    // No spinner, no loading UI — completely silent to the user.
     setRawUrl(url)
     setIsDirect(false)
+    setFrameUrl('about:blank')
     setSourceName(name)
     setSourceStatus('loading')
     setEmbedIssue('')
-    // Show a placeholder immediately so we never flash back to HomeScreen.
-    // The iframe src will be set after the pre-check resolves.
-    setFrameUrl('about:blank')
     saveSettings({ lastSelectedUrl: url, lastSelectedName: name })
 
-    // Add to recents (fire-and-forget — do not block UI)
+    // Add to recents (fire-and-forget)
     const allSources = [...repos.manga, ...repos.anime, ...repos.alternative]
     const matched = allSources.find(s => (s.sources?.[0]?.baseUrl || s.baseUrl || '') === url)
     addRecent({
@@ -64,9 +65,8 @@ export default function Home() {
       pkg: matched?.pkg,
     }).catch(() => {})
 
-    // Pre-check the proxy before showing the iframe — read only headers so we
-    // never download the full error page body. If the proxy is blocked, silently
-    // switch to direct load. No error flash ever shown to the user.
+    // Silent proxy pre-check — only reads headers, never shows anything to the user.
+    // Decides proxy vs direct before the iframe ever gets a URL.
     try {
       const controller = new AbortController()
       let errorCode = ''
@@ -75,22 +75,20 @@ export default function Home() {
           signal: controller.signal,
         })
         errorCode = res.headers.get('x-proxy-error-code') || ''
-        // Abort body download — we only needed the headers
-        controller.abort()
+        controller.abort() // don't download the body
       } catch (err: unknown) {
-        // AbortError is expected (we aborted) — ignore it
-        if (!(err instanceof DOMException && err.name === 'AbortError')) {
-          throw err
-        }
+        // Our own abort — expected and fine
+        if (!(err instanceof DOMException && err.name === 'AbortError')) throw err
       }
       if (PROXY_FALLBACK_CODES.has(errorCode)) {
         setIsDirect(true)
       }
     } catch {
-      // Network error on the pre-check — try direct as fallback
+      // Network failure — fall back to direct
       setIsDirect(true)
     }
 
+    // Now set the real URL — iframe appears with correct src already decided
     setFrameUrl(url)
   }, [saveSettings, addRecent, repos])
 
@@ -121,7 +119,7 @@ export default function Home() {
         return
       }
     } catch {
-      // Ignore DOM inspection failures (cross-origin) — iframe may still be valid
+      // Cross-origin — iframe may still be valid
     }
 
     setEmbedIssue('')
