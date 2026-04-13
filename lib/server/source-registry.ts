@@ -11,6 +11,9 @@ const SAME_SITE_PREFIXES = new Set(['www', 'm', 'mobile', 'read', 'reader', 'bet
 
 let cachedHosts: Set<string> | null = null
 let cacheExpiresAt = 0
+// Keep the last known good hosts so a temporary registry fetch failure
+// doesn't suddenly deny all traffic.
+let lastGoodHosts: Set<string> | null = null
 
 export function expandAllowedHostVariants(hostname: string): Set<string> {
   const normalized = hostname.toLowerCase()
@@ -61,35 +64,59 @@ export async function getAllowedProxyHosts(fetchImpl: typeof fetch = fetch): Pro
     return cachedHosts
   }
 
-  const payloads = await Promise.all(
-    Object.values(REPO_URLS).map(async (urls) => {
-      const sources: SourceEntry[] = []
-      for (const url of urls) {
-        const response = await fetchImpl(url, { redirect: 'follow' })
-        if (!response.ok) {
-          continue
+  try {
+    // Fetch all repo URLs — each one is independent; partial failures are OK.
+    const payloads = await Promise.all(
+      Object.values(REPO_URLS).map(async (urls) => {
+        const sources: SourceEntry[] = []
+        for (const url of urls) {
+          try {
+            const response = await fetchImpl(url, { redirect: 'follow' })
+            if (!response.ok) continue
+            const data = await response.json()
+            if (Array.isArray(data)) {
+              sources.push(...(data as SourceEntry[]))
+            }
+          } catch {
+            // One failed URL should never block the others
+          }
         }
-        const data = await response.json()
-        sources.push(...(data as SourceEntry[]))
+        return sources
+      }),
+    )
+
+    const hosts = new Set<string>()
+    for (const payload of payloads) {
+      for (const host of collectHostnames(payload)) {
+        hosts.add(host)
       }
-      return sources
-    }),
-  )
-
-  const hosts = new Set<string>()
-  for (const payload of payloads) {
-    for (const host of collectHostnames(payload)) {
-      hosts.add(host)
     }
-  }
 
-  if (hosts.size === 0) {
-    throw new Error('Registry fetch returned no hosts')
-  }
+    if (hosts.size === 0) {
+      // Registry returned nothing — fall back to last known good set if available
+      if (lastGoodHosts && lastGoodHosts.size > 0) {
+        console.warn('[source-registry] Registry returned 0 hosts; using last known good allowlist')
+        cachedHosts = lastGoodHosts
+        cacheExpiresAt = now + CACHE_TTL_MS
+        return cachedHosts
+      }
+      throw new Error('Registry fetch returned no hosts and no fallback is available')
+    }
 
-  cachedHosts = hosts
-  cacheExpiresAt = now + CACHE_TTL_MS
-  return hosts
+    cachedHosts = hosts
+    lastGoodHosts = hosts
+    cacheExpiresAt = now + CACHE_TTL_MS
+    return hosts
+  } catch (err) {
+    // On total failure, serve last known good hosts instead of blocking everything
+    if (lastGoodHosts && lastGoodHosts.size > 0) {
+      console.warn('[source-registry] Registry fetch failed; using last known good allowlist:', err)
+      cachedHosts = lastGoodHosts
+      cacheExpiresAt = now + CACHE_TTL_MS
+      return cachedHosts
+    }
+    throw err
+  }
 }
 
 export function registerAllowedProxyHost(hostname: string): void {
