@@ -46,10 +46,12 @@ export default function Home() {
     if (!url || url === '#') return
     setRawUrl(url)
     setIsDirect(false)
-    setFrameUrl('') // keep iframe hidden while we pre-check
     setSourceName(name)
     setSourceStatus('loading')
     setEmbedIssue('')
+    // Show a placeholder immediately so we never flash back to HomeScreen.
+    // The iframe src will be set after the pre-check resolves.
+    setFrameUrl('about:blank')
     saveSettings({ lastSelectedUrl: url, lastSelectedName: name })
 
     // Add to recents (fire-and-forget — do not block UI)
@@ -179,7 +181,7 @@ export default function Home() {
               ref={iframeRef}
               src={isDirect ? frameUrl : `/api/proxy?url=${encodeURIComponent(frameUrl)}`}
               onLoad={handleFrameLoad}
-              className={`w-full h-full ${embedIssue ? 'pointer-events-none opacity-0' : ''}`}
+              className={`w-full h-full ${embedIssue || frameUrl === 'about:blank' ? 'pointer-events-none opacity-0' : ''}`}
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
