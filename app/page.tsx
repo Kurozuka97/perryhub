@@ -19,6 +19,7 @@ const PROXY_FALLBACK_CODES = new Set([
   'UPSTREAM_BROWSER_VERIFICATION_REQUIRED',
   'UPSTREAM_ACCESS_DENIED',
   'UPSTREAM_RATE_LIMITED',
+  'UPSTREAM_LOGIN_REQUIRED',
 ])
 
 export default function Home() {
@@ -45,7 +46,7 @@ export default function Home() {
     if (!url || url === '#') return
     setRawUrl(url)
     setIsDirect(false)
-    setFrameUrl(url)
+    setFrameUrl('') // keep iframe hidden while we pre-check
     setSourceName(name)
     setSourceStatus('loading')
     setEmbedIssue('')
@@ -60,6 +61,35 @@ export default function Home() {
       nsfw: matched?.nsfw || 0,
       pkg: matched?.pkg,
     }).catch(() => {})
+
+    // Pre-check the proxy before showing the iframe — read only headers so we
+    // never download the full error page body. If the proxy is blocked, silently
+    // switch to direct load. No error flash ever shown to the user.
+    try {
+      const controller = new AbortController()
+      let errorCode = ''
+      try {
+        const res = await fetch(`/api/proxy?url=${encodeURIComponent(url)}`, {
+          signal: controller.signal,
+        })
+        errorCode = res.headers.get('x-proxy-error-code') || ''
+        // Abort body download — we only needed the headers
+        controller.abort()
+      } catch (err: unknown) {
+        // AbortError is expected (we aborted) — ignore it
+        if (!(err instanceof DOMException && err.name === 'AbortError')) {
+          throw err
+        }
+      }
+      if (PROXY_FALLBACK_CODES.has(errorCode)) {
+        setIsDirect(true)
+      }
+    } catch {
+      // Network error on the pre-check — try direct as fallback
+      setIsDirect(true)
+    }
+
+    setFrameUrl(url)
   }, [saveSettings, addRecent, repos])
 
   const handleHome = useCallback(() => {
@@ -82,26 +112,7 @@ export default function Home() {
 
     try {
       const doc = iframe.contentDocument
-      const title = doc?.title || ''
-      const bodyText = doc?.body?.innerText || ''
-
-      // Check if the proxy returned a block error page — if so, sniff the error
-      // code out of the page and decide whether to fall back to direct load.
-      if (!isDirect && title === 'Proxy unavailable') {
-        const errorCode = bodyText.match(/·\s*([A-Z_]+)$/m)?.[1] || ''
-        if (PROXY_FALLBACK_CODES.has(errorCode)) {
-          // Silently retry as a direct iframe load
-          setIsDirect(true)
-          setFrameUrl(rawUrl)
-          return
-        }
-        // Any other proxy error — show the overlay
-        setEmbedIssue(bodyText.trim() || 'Proxy error. Use Open in Tab.')
-        setSourceStatus('error')
-        return
-      }
-
-      const issue = detectEmbeddedProxyIssue(title, bodyText)
+      const issue = detectEmbeddedProxyIssue(doc?.title || '', doc?.body?.innerText || '')
       if (issue) {
         setEmbedIssue(issue)
         setSourceStatus('error')
@@ -113,7 +124,7 @@ export default function Home() {
 
     setEmbedIssue('')
     setSourceStatus('live')
-  }, [isDirect, rawUrl])
+  }, [])
 
   const handleOpenVaultTab = useCallback((tab: VaultTab) => {
     setVaultInitialTab(tab)
