@@ -20,6 +20,9 @@ const PROXY_FALLBACK_CODES = new Set([
   'UPSTREAM_ACCESS_DENIED',
   'UPSTREAM_RATE_LIMITED',
   'UPSTREAM_LOGIN_REQUIRED',
+  'UNSUPPORTED_PROTOCOL',
+  'INVALID_URL',
+  'PRIVATE_HOST_BLOCKED',
 ])
 
 export default function Home() {
@@ -65,27 +68,35 @@ export default function Home() {
       pkg: matched?.pkg,
     }).catch(() => {})
 
-    // Silent proxy pre-check — only reads headers, never shows anything to the user.
-    // Decides proxy vs direct before the iframe ever gets a URL.
-    try {
-      const controller = new AbortController()
-      let errorCode = ''
+    // Auto-skip proxy for non-https URLs — no pre-check needed
+    let parsedProtocol = ''
+    try { parsedProtocol = new URL(url).protocol } catch { /* invalid url */ }
+
+    if (parsedProtocol !== 'https:') {
+      setIsDirect(true)
+    } else {
+      // Silent proxy pre-check — only reads headers, never shows anything to the user.
+      // Decides proxy vs direct before the iframe ever gets a URL.
       try {
-        const res = await fetch(`/api/proxy?url=${encodeURIComponent(url)}`, {
-          signal: controller.signal,
-        })
-        errorCode = res.headers.get('x-proxy-error-code') || ''
-        controller.abort() // don't download the body
-      } catch (err: unknown) {
-        // Our own abort — expected and fine
-        if (!(err instanceof DOMException && err.name === 'AbortError')) throw err
-      }
-      if (PROXY_FALLBACK_CODES.has(errorCode)) {
+        const controller = new AbortController()
+        let errorCode = ''
+        try {
+          const res = await fetch(`/api/proxy?url=${encodeURIComponent(url)}`, {
+            signal: controller.signal,
+          })
+          errorCode = res.headers.get('x-proxy-error-code') || ''
+          controller.abort() // don't download the body
+        } catch (err: unknown) {
+          // Our own abort — expected and fine
+          if (!(err instanceof DOMException && err.name === 'AbortError')) throw err
+        }
+        if (PROXY_FALLBACK_CODES.has(errorCode)) {
+          setIsDirect(true)
+        }
+      } catch {
+        // Network failure — fall back to direct
         setIsDirect(true)
       }
-    } catch {
-      // Network failure — fall back to direct
-      setIsDirect(true)
     }
 
     // Now set the real URL — iframe appears with correct src already decided
