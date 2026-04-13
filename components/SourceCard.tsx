@@ -1,21 +1,63 @@
 'use client'
-import { Source } from '@/lib/types'
+import { Source, Tab } from '@/lib/types'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { checkSourceHealth, SourceHealthStatus } from '@/lib/source-health'
 
 interface Props {
   source: Source
   index: number
+  tab?: Tab | string          // only 'anime' triggers health check
   onSelect: (url: string, name: string) => void
   onBookmark?: (source: Source) => void
   bookmarked?: boolean
 }
 
-export default function SourceCard({ source, index, onSelect, onBookmark, bookmarked }: Props) {
+const BADGE: Record<SourceHealthStatus, { dot: string; text: string; label: string }> = {
+  checking: { dot: '#6ababa', text: '#6ababa', label: 'Checking…' },
+  ok:       { dot: '#4ade80', text: '#4ade80', label: 'Works directly' },
+  blocked:  { dot: '#facc15', text: '#facc15', label: 'Needs ext. browser' },
+  dead:     { dot: '#f87171', text: '#f87171', label: 'Dead link' },
+}
+
+function HealthBadge({ status }: { status: SourceHealthStatus }) {
+  const b = BADGE[status]
+  return (
+    <div className="flex items-center gap-1" style={{ marginTop: 6 }}>
+      <span
+        style={{
+          width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+          background: b.dot,
+          animation: status === 'checking' ? 'pulse 1.2s ease-in-out infinite' : undefined,
+          display: 'inline-block',
+        }}
+      />
+      <span style={{
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: 9,
+        color: b.text,
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+      }}>
+        {b.label}
+      </span>
+    </div>
+  )
+}
+
+export default function SourceCard({ source, index, tab, onSelect, onBookmark, bookmarked }: Props) {
   const url = source.sources?.[0]?.baseUrl || source.baseUrl || '#'
   const name = source.name.replace(/Tachiyomi: |Aniyomi: /g, '')
   const domain = url.replace(/https?:\/\//, '').split('/')[0]
   const [imgError, setImgError] = useState(false)
+  const [health, setHealth] = useState<SourceHealthStatus | null>(
+    tab === 'anime' ? 'checking' : null
+  )
+
+  useEffect(() => {
+    if (tab !== 'anime') return
+    checkSourceHealth(url, setHealth)
+  }, [url, tab])
 
   const iconUrl = source.pkg
     ? `https://raw.githubusercontent.com/keiyoushi/extensions/repo/icon/${source.pkg}.png`
@@ -87,12 +129,18 @@ export default function SourceCard({ source, index, onSelect, onBookmark, bookma
           </div>
 
           {/* Domain */}
-          <p className="truncate mb-3" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#a0c4c4' }}>
+          <p className="truncate" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#a0c4c4', marginBottom: health ? 0 : 12 }}>
             {domain}
           </p>
 
+          {/* Health badge — anime only */}
+          {health && <HealthBadge status={health} />}
+
+          {/* Spacer when no badge */}
+          {!health && <div style={{ marginBottom: 0 }} />}
+
           {/* Meta — lang left, 18+ right */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#a0c4c4', textTransform: 'uppercase', letterSpacing: 1 }}>
               {source.lang || 'N/A'}
             </span>
