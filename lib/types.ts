@@ -54,16 +54,33 @@ export const DNS_OPTIONS = [
 
 export const REPO_URLS: Record<Tab, string[]> = {
   manga: [
-    'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Manga.json',
-     'https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/refs/heads/main/index.json',
+    'https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json',
+    'https://raw.githubusercontent.com/yuzono/manga-repo/repo/index.min.json',
+    'https://raw.githubusercontent.com/yuzono/cursed-manga-repo/repo/index.min.json',
+    'https://raw.githubusercontent.com/Kareadita/tach-extension/repo/index.min.json',
+    'https://raw.githubusercontent.com/Suwayomi/tachiyomi-extension/repo/index.min.json',   
+    'https://raw.githubusercontent.com/kodjodevf/mangayomi-extensions/refs/heads/main/index.json',
+    'https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/refs/heads/main/index.json',
+    'https://raw.githubusercontent.com/Swakshan/mangayomi-swak-extensions/refs/heads/main/index.json',
+    'https://raw.githubusercontent.com/Schnitzel5/sugoi-modules/refs/heads/main/index.json',
+    'https://raw.githubusercontent.com/gato404/kegareta-sauces/refs/heads/main/index.json',
   ],
   anime: [
     'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Anime.json',
+    'https://raw.githubusercontent.com/yuzono/anime-repo/repo/index.min.json',
+    'https://raw.githubusercontent.com/Secozzi/aniyomi-extensions/refs/heads/repo/index.min.json',  
     'https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/refs/heads/main/anime_index.json',
+    'https://raw.githubusercontent.com/Swakshan/mangayomi-swak-extensions/refs/heads/main/anime_index.json',
+    'https://raw.githubusercontent.com/Schnitzel5/sugoi-modules/refs/heads/main/anime_index.json',
+    'https://raw.githubusercontent.com/gato404/kegareta-sauces/refs/heads/main/anime_index.json',
   ],
   alternative: [
     'https://raw.githubusercontent.com/Kurozuka97/Anime-Repo/refs/heads/main/Alternative.json',
+    'https://raw.githubusercontent.com/kodjodevf/mangayomi-extensions/refs/heads/main/novel_index.json',
     'https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/refs/heads/main/novel_index.json',
+    'https://raw.githubusercontent.com/Swakshan/mangayomi-swak-extensions/refs/heads/main/novel_index.json',
+    'https://raw.githubusercontent.com/rektpartyaftermath/Legado-booksource-collection/main/AllBooksource.json',
+    'https://raw.githubusercontent.com/LNReader/lnreader-plugins/plugins/v3.0.0/.dist/plugins.min.json',
   ],
 }
 
