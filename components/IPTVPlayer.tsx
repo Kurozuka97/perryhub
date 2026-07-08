@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import Hls from 'hls.js'
 
 interface Props {
@@ -13,16 +13,26 @@ type PlayerStatus = 'loading' | 'playing' | 'error'
 export default function IPTVPlayer({ url, name, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const hlsRef = useRef<Hls | null>(null)
   const [status, setStatus] = useState<PlayerStatus>('loading')
+
+  const cleanupHls = useCallback(() => {
+    if (hlsRef.current) {
+      hlsRef.current.destroy()
+      hlsRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
     setStatus('loading')
+    cleanupHls()
 
     if (Hls.isSupported()) {
       const hls = new Hls()
+      hlsRef.current = hls
       hls.loadSource(url)
       hls.attachMedia(video)
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -32,7 +42,6 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) setStatus('error')
       })
-      return () => hls.destroy()
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = url
       video.play().catch(() => setStatus('error'))
@@ -41,7 +50,11 @@ export default function IPTVPlayer({ url, name, onClose }: Props) {
     } else {
       setStatus('error')
     }
-  }, [url])
+
+    return () => {
+      cleanupHls()
+    }
+  }, [url, cleanupHls])
 
   return (
     <div ref={containerRef} className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#000', width: '100%', height: '100%', maxWidth: '100vw', maxHeight: '100vh' }}>

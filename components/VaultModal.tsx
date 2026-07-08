@@ -95,14 +95,19 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
 
   const filtered = useMemo(() => {
     if (isSearching || activeTab === 'iptv') return []
+    
+    const bookmarksMemo = settings.bookmarks || []
+    const prefLangMemo = settings.prefLang
+    const showNSFWMemo = settings.showNSFW
+    
     let data: Source[] = activeTab === 'bookmarks'
-      ? (settings.bookmarks || []).map(bookmarkToSource)
+      ? bookmarksMemo.map(bookmarkToSource)
       : repos[activeTab as Tab] || []
 
     let result = data.filter(s => {
       const matchSearch = fuzzyMatch(s.name, search)
-      const matchLang = activeTab === 'bookmarks' || settings.prefLang === 'all' || s.lang === settings.prefLang
-      const matchNSFW = settings.showNSFW || !s.nsfw
+      const matchLang = activeTab === 'bookmarks' || prefLangMemo === 'all' || s.lang === prefLangMemo
+      const matchNSFW = showNSFWMemo || !s.nsfw
       return matchSearch && matchLang && matchNSFW
     })
 
@@ -111,7 +116,7 @@ export default function VaultModal({ open, onClose, initialTab, repos, loading, 
     else if (sort === 'version') result = [...result].sort((a, b) => (b.version || '0').localeCompare(a.version || '0'))
 
     return result
-  }, [repos, activeTab, search, sort, settings.prefLang, settings.showNSFW, settings.bookmarks, isSearching])
+  }, [repos, activeTab, search, sort, settings.bookmarks, isSearching])
 
   const counts: Record<ActiveTab, number | undefined> = {
     manga: repos.manga.length,

@@ -46,9 +46,15 @@ export default function Home() {
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>('idle')
   const [embedIssue, setEmbedIssue] = useState('')
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  const proxyCheckControllerRef = useRef<AbortController | null>(null)
 
   const handleSelect = useCallback(async (url: string, name: string) => {
     if (!url || url === '#') return
+
+    // Cancel any ongoing proxy check
+    if (proxyCheckControllerRef.current) {
+      proxyCheckControllerRef.current.abort()
+    }
 
     // Reset — keep iframe hidden on about:blank while we decide proxy vs direct
     setRawUrl(url)
@@ -81,8 +87,9 @@ export default function Home() {
       direct = true
     } else {
       // Silent proxy pre-check — only reads headers, never shows anything to the user
+      const controller = new AbortController()
+      proxyCheckControllerRef.current = controller
       try {
-        const controller = new AbortController()
         let errorCode = ''
         try {
           const dnsParam = settings.dnsProvider ? `&dns=${encodeURIComponent(settings.dnsProvider)}` : ''
@@ -99,6 +106,8 @@ export default function Home() {
         }
       } catch {
         direct = true
+      } finally {
+        proxyCheckControllerRef.current = null
       }
     }
 
@@ -106,7 +115,7 @@ export default function Home() {
     setIsDirect(direct)
     const dnsQuery = settings.dnsProvider ? `&dns=${encodeURIComponent(settings.dnsProvider)}` : ''
     setIframeSrc(direct ? url : `/api/proxy?url=${encodeURIComponent(url)}${dnsQuery}`)
-  }, [saveSettings, addRecent, repos])
+  }, [saveSettings, addRecent, repos, settings.dnsProvider])
 
   const handleHome = useCallback(() => {
     setIframeSrc('')

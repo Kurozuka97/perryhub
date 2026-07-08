@@ -9,19 +9,42 @@ type StreamStatus = 'checking' | 'live' | 'dead'
 
 function useStreamCheck() {
   const [streamStatus, setStreamStatus] = useState<Record<string, StreamStatus>>({})
+  const abortControllersRef = useRef<Map<string, AbortController>>(new Map())
 
   const checkStream = useCallback(async (url: string) => {
+    // Cancel any existing check for this URL
+    const existingController = abortControllersRef.current.get(url)
+    if (existingController) {
+      existingController.abort()
+    }
+
     if (streamStatus[url]) return
+    
+    const controller = new AbortController()
+    abortControllersRef.current.set(url, controller)
+    
     setStreamStatus(prev => ({ ...prev, [url]: 'checking' }))
     try {
       const res = await fetch(`/api/proxy?url=${encodeURIComponent(url)}`, {
-        signal: AbortSignal.timeout(5000),
+        signal: controller.signal,
       })
       setStreamStatus(prev => ({ ...prev, [url]: res.ok ? 'live' : 'dead' }))
     } catch {
-      setStreamStatus(prev => ({ ...prev, [url]: 'dead' }))
+      if (!controller.signal.aborted) {
+        setStreamStatus(prev => ({ ...prev, [url]: 'dead' }))
+      }
+    } finally {
+      abortControllersRef.current.delete(url)
     }
   }, [streamStatus])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      abortControllersRef.current.forEach(controller => controller.abort())
+      abortControllersRef.current.clear()
+    }
+  }, [])
 
   return { streamStatus, checkStream }
 }
