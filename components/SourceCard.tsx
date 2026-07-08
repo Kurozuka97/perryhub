@@ -3,6 +3,7 @@ import { Source, Tab } from '@/lib/types'
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { checkSourceHealth, recheckSourceHealth, SourceHealthStatus } from '@/lib/source-health'
+import { getValidSourceUrl } from '@/lib/source-utils'
 
 interface Props {
   source: Source
@@ -68,9 +69,9 @@ function HealthBadge({ status, onRecheck }: { status: SourceHealthStatus; onRech
 }
 
 export default function SourceCard({ source, index, tab, onSelect, onBookmark, bookmarked }: Props) {
-  const url = source.sources?.[0]?.baseUrl || source.baseUrl || '#'
+  const url = getValidSourceUrl(source) || '#'
   const name = source.name.replace(/Tachiyomi: |Aniyomi: /g, '')
-  const domain = url.replace(/https?:\/\//, '').split('/')[0]
+  const domain = url !== '#' ? url.replace(/https?:\/\//, '').split('/')[0] : 'N/A'
   const [imgError, setImgError] = useState(false)
   const [health, setHealth] = useState<SourceHealthStatus | null>(
     tab === 'anime' ? 'checking' : null
