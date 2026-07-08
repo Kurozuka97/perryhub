@@ -10,18 +10,21 @@ type StreamStatus = 'checking' | 'live' | 'dead'
 function useStreamCheck() {
   const [streamStatus, setStreamStatus] = useState<Record<string, StreamStatus>>({})
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map())
+  const checkedUrlsRef = useRef<Set<string>>(new Set())
 
   const checkStream = useCallback(async (url: string) => {
+    // Don't check if already checked or currently checking
+    if (checkedUrlsRef.current.has(url) || streamStatus[url] === 'checking') return
+    
     // Cancel any existing check for this URL
     const existingController = abortControllersRef.current.get(url)
     if (existingController) {
       existingController.abort()
     }
 
-    if (streamStatus[url]) return
-    
     const controller = new AbortController()
     abortControllersRef.current.set(url, controller)
+    checkedUrlsRef.current.add(url)
     
     setStreamStatus(prev => ({ ...prev, [url]: 'checking' }))
     try {
@@ -43,6 +46,7 @@ function useStreamCheck() {
     return () => {
       abortControllersRef.current.forEach(controller => controller.abort())
       abortControllersRef.current.clear()
+      checkedUrlsRef.current.clear()
     }
   }, [])
 
