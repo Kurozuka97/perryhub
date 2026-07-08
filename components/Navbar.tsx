@@ -89,7 +89,12 @@ export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHom
           {/* Open in tab — hide on mobile */}
           {frameActive && frameUrl && (
             <button
-              onClick={() => window.open(frameUrl, '_blank', 'noopener,noreferrer')}
+              onClick={() => {
+                const urlToOpen = rawUrl && rawUrl !== '#' ? rawUrl : frameUrl
+                if (urlToOpen && urlToOpen !== '#' && urlToOpen !== 'about:blank' && urlToOpen.startsWith('http')) {
+                  window.open(urlToOpen, '_blank', 'noopener,noreferrer')
+                }
+              }}
               className="hidden sm:flex items-center gap-2 px-3 py-2 rounded transition-all"
               style={{ background: 'transparent', border: '1px solid rgba(0,201,201,0.25)', color: '#00c9c9', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,201,201,0.08)'; e.currentTarget.style.borderColor = 'rgba(0,201,201,0.45)' }}
@@ -174,7 +179,13 @@ export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHom
           ))}
           {frameActive && frameUrl && (
             <button
-              onClick={() => { window.open(frameUrl, '_blank', 'noopener,noreferrer'); setMenuOpen(false) }}
+              onClick={() => {
+                const urlToOpen = rawUrl && rawUrl !== '#' ? rawUrl : frameUrl
+                if (urlToOpen && urlToOpen !== '#' && urlToOpen !== 'about:blank' && urlToOpen.startsWith('http')) {
+                  window.open(urlToOpen, '_blank', 'noopener,noreferrer')
+                }
+                setMenuOpen(false)
+              }}
               className="px-6 py-3 text-left"
               style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: '#4a8888' }}
             >
