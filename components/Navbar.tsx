@@ -11,12 +11,13 @@ interface Props {
   sourceName: string
   sourceStatus: 'idle' | 'loading' | 'live' | 'error'
   frameUrl?: string
+  rawUrl?: string
   authMode: 'loading' | 'auth' | 'guest' | 'user'
   perryId: string | null
   onOpenSettings: () => void
 }
 
-export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHome, sourceName, sourceStatus, frameUrl, authMode, perryId, onOpenSettings }: Props) {
+export default function Navbar({ onOpenVault, onOpenVaultTab, frameActive, onHome, sourceName, sourceStatus, frameUrl, rawUrl, authMode, perryId, onOpenSettings }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const statusColor = {

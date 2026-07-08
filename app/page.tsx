@@ -193,6 +193,7 @@ export default function Home() {
         sourceName={sourceName}
         sourceStatus={sourceStatus}
         frameUrl={frameUrl}
+        rawUrl={rawUrl}
         authMode={authMode}
         perryId={perryId}
         onOpenSettings={() => setSettingsOpen(true)}
