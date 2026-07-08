@@ -230,7 +230,12 @@ export default function Home() {
                     {embedIssue}
                   </p>
                   <button
-                    onClick={() => window.open(rawUrl || frameUrl, '_blank', 'noopener,noreferrer')}
+                    onClick={() => {
+                      const urlToOpen = rawUrl && rawUrl !== '#' ? rawUrl : frameUrl
+                      if (urlToOpen && urlToOpen !== '#' && urlToOpen !== 'about:blank') {
+                        window.open(urlToOpen, '_blank', 'noopener,noreferrer')
+                      }
+                    }}
                     className="px-4 py-2 rounded transition-all"
                     style={{
                       background: 'rgba(0,201,201,0.12)',
