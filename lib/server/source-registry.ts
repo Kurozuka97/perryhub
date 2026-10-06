@@ -1,5 +1,5 @@
-import { REPO_URLS } from '../types.js'
-import { getValidSourceUrl } from '../source-utils.js'
+import { REPO_URLS } from '../types.ts'
+import { getValidSourceUrl } from '../source-utils.ts'
 
 interface SourceEntry {
   baseUrl?: string
@@ -71,7 +71,10 @@ export async function getAllowedProxyHosts(fetchImpl: typeof fetch = fetch): Pro
         const sources: SourceEntry[] = []
         for (const url of urls) {
           try {
-            const response = await fetchImpl(url, { redirect: 'follow' })
+            const response = await fetchImpl(url, {
+              redirect: 'follow',
+              signal: AbortSignal.timeout(5_000),
+            })
             if (!response.ok) continue
             const data = await response.json()
             if (Array.isArray(data)) {

@@ -1,5 +1,16 @@
 #!/usr/bin/env node
-import { chromium } from 'playwright'
+
+async function loadChromium() {
+  try {
+    const { chromium } = await import('playwright')
+    return chromium
+  } catch {
+    throw new Error(
+      'Playwright is required for this audit. Install it with:\n' +
+        '  npm i -D playwright && npx playwright install chromium',
+    )
+  }
+}
 
 const REPO_URLS = {
   manga: [
@@ -114,108 +125,113 @@ async function loadSources(tab) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2))
+  const chromium = await loadChromium()
   const browser = await chromium.launch({ headless: true })
-  const sources = await loadSources(options.tab)
-  const results = []
-  let index = 0
 
-  async function worker() {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
-    await page.goto(options.baseUrl, { waitUntil: 'domcontentloaded' })
+  try {
+    const sources = await loadSources(options.tab)
+    const results = []
+    let index = 0
 
-    while (index < sources.length) {
-      const current = sources[index++]
-      try {
-        const response = await page.goto(
-          `${options.baseUrl}/api/proxy?url=${encodeURIComponent(current.url)}`,
-          {
-            waitUntil: 'domcontentloaded',
-            timeout: options.timeoutMs,
-          },
-        )
+    async function worker() {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+      await page.goto(options.baseUrl, { waitUntil: 'domcontentloaded' })
 
-        if (response?.status() === 200) {
-          try {
-            await page.waitForLoadState('networkidle', {
-              timeout: Math.min(options.timeoutMs, 5_000),
-            })
-          } catch {
-            // Many sources keep long-lived requests open. The DOM snapshot below is still useful.
-          }
-        }
+      while (index < sources.length) {
+        const current = sources[index++]
+        try {
+          const response = await page.goto(
+            `${options.baseUrl}/api/proxy?url=${encodeURIComponent(current.url)}`,
+            {
+              waitUntil: 'domcontentloaded',
+              timeout: options.timeoutMs,
+            },
+          )
 
-        const row = await page.evaluate(
-          ({ source, markers, leadingEmbedPatterns, bodyEmbedPatterns }) => {
-            const bodyText = document.body?.innerText?.replace(/\s+/g, ' ').trim() || ''
-            const title = document.title.replace(/\s+/g, ' ').trim()
-            const leadingText = bodyText.slice(0, 160)
-            const bodySample = bodyText.slice(0, 600)
-
-            const marker =
-              markers.find(([, pattern]) => new RegExp(pattern, 'i').test(bodyText))?.[0] || null
-
-            const embedIssue =
-              leadingEmbedPatterns.some((pattern) => new RegExp(pattern, 'i').test(leadingText)) ||
-              bodyEmbedPatterns.some((pattern) => new RegExp(pattern, 'i').test(bodySample))
-
-            return {
-              ...source,
-              finalBrowserUrl: window.location.href,
-              title,
-              bodySample: bodyText.slice(0, 600),
-              marker,
-              embedIssue,
+          if (response?.status() === 200) {
+            try {
+              await page.waitForLoadState('networkidle', {
+                timeout: Math.min(options.timeoutMs, 5_000),
+              })
+            } catch {
+              // Many sources keep long-lived requests open. The DOM snapshot below is still useful.
             }
-          },
-          {
-            source: current,
-            markers: MARKERS.map(([name, pattern]) => [name, pattern.source]),
-            leadingEmbedPatterns: EMBED_ROUTE_MISMATCH_LEADING_PATTERNS.map(
-              (pattern) => pattern.source,
-            ),
-            bodyEmbedPatterns: EMBED_ROUTE_MISMATCH_BODY_PATTERNS.map((pattern) => pattern.source),
-          },
-        )
+          }
 
-        results.push({
-          ...row,
-          status: response?.status() ?? 'NAVIGATION_FAILED',
-          proxyStatus:
-            row.embedIssue && response?.status() === 200
-              ? 'embed-unsupported'
-              : response?.headers()['x-proxy-status'] || 'unknown',
-          proxyErrorCode:
-            row.embedIssue && response?.status() === 200
-              ? 'UPSTREAM_EMBED_UNSUPPORTED'
-              : response?.headers()['x-proxy-error-code'] || null,
-        })
+          const row = await page.evaluate(
+            ({ source, markers, leadingEmbedPatterns, bodyEmbedPatterns }) => {
+              const bodyText = document.body?.innerText?.replace(/\s+/g, ' ').trim() || ''
+              const title = document.title.replace(/\s+/g, ' ').trim()
+              const leadingText = bodyText.slice(0, 160)
+              const bodySample = bodyText.slice(0, 600)
 
-        await page.goto('about:blank', { waitUntil: 'domcontentloaded' })
-      } catch (error) {
-        results.push({
-          ...current,
-          status: 'NAVIGATION_FAILED',
-          proxyStatus: 'harness-failed',
-          proxyErrorCode: String(error?.message || error),
-          marker: null,
-          embedIssue: false,
-        })
+              const marker =
+                markers.find(([, pattern]) => new RegExp(pattern, 'i').test(bodyText))?.[0] || null
+
+              const embedIssue =
+                leadingEmbedPatterns.some((pattern) => new RegExp(pattern, 'i').test(leadingText)) ||
+                bodyEmbedPatterns.some((pattern) => new RegExp(pattern, 'i').test(bodySample))
+
+              return {
+                ...source,
+                finalBrowserUrl: window.location.href,
+                title,
+                bodySample: bodyText.slice(0, 600),
+                marker,
+                embedIssue,
+              }
+            },
+            {
+              source: current,
+              markers: MARKERS.map(([name, pattern]) => [name, pattern.source]),
+              leadingEmbedPatterns: EMBED_ROUTE_MISMATCH_LEADING_PATTERNS.map(
+                (pattern) => pattern.source,
+              ),
+              bodyEmbedPatterns: EMBED_ROUTE_MISMATCH_BODY_PATTERNS.map((pattern) => pattern.source),
+            },
+          )
+
+          results.push({
+            ...row,
+            status: response?.status() ?? 'NAVIGATION_FAILED',
+            proxyStatus:
+              row.embedIssue && response?.status() === 200
+                ? 'embed-unsupported'
+                : response?.headers()['x-proxy-status'] || 'unknown',
+            proxyErrorCode:
+              row.embedIssue && response?.status() === 200
+                ? 'UPSTREAM_EMBED_UNSUPPORTED'
+                : response?.headers()['x-proxy-error-code'] || null,
+          })
+
+          await page.goto('about:blank', { waitUntil: 'domcontentloaded' })
+        } catch (error) {
+          results.push({
+            ...current,
+            status: 'NAVIGATION_FAILED',
+            proxyStatus: 'harness-failed',
+            proxyErrorCode: String(error?.message || error),
+            marker: null,
+            embedIssue: false,
+          })
+        }
       }
+
+      await page.close()
     }
 
-    await page.close()
-  }
+    await Promise.all(Array.from({ length: options.concurrency }, () => worker()))
 
-  await Promise.all(Array.from({ length: options.concurrency }, () => worker()))
-  await browser.close()
+    const summary = summarize(results)
+    console.log(JSON.stringify(summary, null, 2))
 
-  const summary = summarize(results)
-  console.log(JSON.stringify(summary, null, 2))
-
-  if (options.output) {
-    const { writeFileSync } = await import('node:fs')
-    writeFileSync(options.output, JSON.stringify({ summary, results }, null, 2))
-    console.log(`Full report written to ${options.output}`)
+    if (options.output) {
+      const { writeFileSync } = await import('node:fs')
+      writeFileSync(options.output, JSON.stringify({ summary, results }, null, 2))
+      console.log(`Full report written to ${options.output}`)
+    }
+  } finally {
+    await browser.close()
   }
 }
 

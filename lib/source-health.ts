@@ -1,4 +1,9 @@
+import { BROWSER_REQUIRED_CODES, DEAD_CODES } from './proxy-codes.ts'
+
 export type SourceHealthStatus = 'checking' | 'ok' | 'blocked' | 'slow' | 'dead'
+
+// Codes that mean "alive but not proxied-able" beyond the shared set.
+const EXTRA_BLOCKED_CODES = new Set(['HOST_NOT_ALLOWED'])
 
 // Cache entries expire after 5 minutes so status stays fresh
 const CACHE_TTL_MS = 5 * 60 * 1000
@@ -40,26 +45,6 @@ function dequeue() {
     next()
   }
 }
-
-// Proxy error codes that mean the site is alive but requires a real browser
-const BLOCKED_CODES = new Set([
-  'UPSTREAM_BROWSER_VERIFICATION_REQUIRED',
-  'UPSTREAM_ACCESS_DENIED',
-  'UPSTREAM_RATE_LIMITED',
-  'UPSTREAM_LOGIN_REQUIRED',
-])
-
-// Proxy error codes that mean the site is genuinely unreachable
-const DEAD_CODES = new Set([
-  'UPSTREAM_NOT_FOUND',
-  'UPSTREAM_UNAVAILABLE',
-  'UPSTREAM_SITE_ERROR',
-  'UPSTREAM_HTTP_ERROR',
-  'UPSTREAM_DNS_ERROR',
-  'UPSTREAM_CONNECTION_ERROR',
-  'UPSTREAM_TLS_ERROR',
-  'UPSTREAM_FETCH_FAILED',
-])
 
 // More precise CF/bot challenge signatures — avoid broad keywords like 'cloudflare'
 const CF_SIGNATURES = [
@@ -120,10 +105,15 @@ export function checkSourceHealth(
       // Check proxy error code header first — most reliable signal
       const proxyErrorCode = res.headers.get('X-Proxy-Error-Code') || ''
 
-      if (BLOCKED_CODES.has(proxyErrorCode)) return finish('blocked')
+      if (BROWSER_REQUIRED_CODES.has(proxyErrorCode) || EXTRA_BLOCKED_CODES.has(proxyErrorCode)) {
+        return finish('blocked')
+      }
 
       // Timeout from proxy side = slow/unreachable, not hard dead
       if (proxyErrorCode === 'UPSTREAM_TIMEOUT') return finish('slow')
+
+      // Our own rate limiter or a slow upstream — retry later, not dead
+      if (proxyErrorCode === 'RATE_LIMITED') return finish('slow')
 
       if (DEAD_CODES.has(proxyErrorCode)) return finish('dead')
 

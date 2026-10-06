@@ -51,11 +51,9 @@ export default class ErrorBoundary extends Component<Props, State> {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded transition-all"
+              className="px-4 py-2 rounded transition-colors cursor-pointer bg-[rgba(0,201,201,0.12)] hover:bg-[rgba(0,201,201,0.2)] text-[#00c9c9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00c9c9]"
               style={{
-                background: 'rgba(0,201,201,0.12)',
                 border: '1px solid rgba(0,201,201,0.28)',
-                color: '#00c9c9',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 11,
                 letterSpacing: 1,

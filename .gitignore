@@ -10,6 +10,15 @@ node_modules
 # production
 /build
 
+# build artifacts
+*.tsbuildinfo
+
+# vercel
+.vercel/
+
+# testing / coverage
+coverage/
+
 # misc
 .DS_Store
 *.pem
@@ -18,6 +27,9 @@ node_modules
 .env.development.local
 .env.test.local
 .env.production.local
+
+# lint caches
+.eslintcache
 
 npm-debug.log*
 yarn-debug.log*

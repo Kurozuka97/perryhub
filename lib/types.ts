@@ -32,12 +32,27 @@ export interface UserSettings {
   showNSFW: boolean
   prefLang: string
   dnsProvider: string
-  lastSelectedUrl: string
-  lastSelectedName: string
   bookmarks: BookmarkedSource[]
   recents: RecentSource[]
   updatedAt?: string
 }
+
+/** Shared tab metadata — single source of truth for labels and colours. */
+export const TAB_META = {
+  manga: { label: 'Manga', shortLabel: 'Manga', color: '#ff8c42' },
+  anime: { label: 'Anime', shortLabel: 'Anime', color: '#00c9c9' },
+  alternative: { label: 'Alternative', shortLabel: 'Alt', color: '#a78bfa' },
+  iptv: { label: 'IPTV', shortLabel: 'IPTV', color: '#00ff88' },
+  bookmarks: { label: 'Bookmarks', shortLabel: 'Bookmarks', color: '#ffb020' },
+} as const
+
+export type VaultTab = keyof typeof TAB_META
+
+export const REPO_TABS: Tab[] = ['manga', 'anime', 'alternative']
+
+export const VAULT_TABS: VaultTab[] = ['manga', 'anime', 'alternative', 'iptv', 'bookmarks']
+
+export const QUICK_ACCESS_TABS: VaultTab[] = ['manga', 'anime', 'alternative', 'iptv']
 
 export const DNS_OPTIONS = [
   { label: 'Direct', value: 'none' },

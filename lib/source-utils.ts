@@ -1,5 +1,10 @@
-import type { Source } from './types'
-import { isPrivateAddress } from './server/proxy.js'
+import type { Source } from './types.ts'
+import { isPrivateAddress } from './net.ts'
+
+/** Strips upstream prefix noise from display names. */
+export function cleanSourceName(name: string): string {
+  return name.replace(/Tachiyomi: |Aniyomi: /g, '')
+}
 
 interface SourceUrlEntry {
   baseUrl?: string

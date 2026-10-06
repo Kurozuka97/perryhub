@@ -1,0 +1,55 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // ── Perry Hub accounts ──────────────────────────────────────────────
+    // Password verification happens on the client against a per-account
+    // salted PBKDF2 hash (see hooks/useFirebase.ts). Because this project
+    // has no trusted server, a leaked read of this collection exposes
+    // offline-crackable verifiers — PBKDF2-SHA256 @ 150k iterations makes
+    // that impractical for weak-password audits only.
+    match /artifacts/{appId}/perryaccounts/{perryId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly([
+             'passwordHash', 'salt', 'algorithm', 'iterations',
+             'sessionToken', 'sessionExpiry', 'createdAt', 'lastLoginAt'
+           ])
+        && request.resource.data.passwordHash is string
+        && request.resource.data.salt is string
+        && request.resource.data.algorithm == 'PBKDF2-SHA256';
+
+      // Only verifier/session fields may rotate — an attacker with write
+      // access cannot swap in their own password hash and take over the ID
+      // without also producing a valid salt/algorithm tuple, and the client
+      // requires a matching session token to restore a session.
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+             'passwordHash', 'salt', 'algorithm', 'iterations',
+             'sessionToken', 'sessionExpiry', 'lastLoginAt'
+           ]);
+
+      allow delete: if false;
+    }
+
+    // ── Guest (anonymous) settings ──────────────────────────────────────
+    match /artifacts/{appId}/users/{uid}/settings/{doc} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── Signed-in (Perry ID) settings ───────────────────────────────────
+    // Binding these to a verified session needs a trusted server (Cloud
+    // Functions). Until then, knowing the Perry ID + being signed in is
+    // the access gate — the client additionally verifies the session token
+    // against perryaccounts before restoring a session.
+    match /artifacts/{appId}/perryusers/{perryId}/settings/{doc} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

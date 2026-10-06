@@ -77,7 +77,7 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
           <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 36, letterSpacing: 4, color: '#00c9c9' }}>
             PERRY HUB
           </h1>
-          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 3, marginTop: 4 }}>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 3, marginTop: 4 }}>
             {mode === 'welcome' ? 'Official Portal of Truck-Kun Survivors' : mode === 'login' ? 'Welcome back' : 'Create account'}
           </p>
         </div>
@@ -87,9 +87,8 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
           <div className="flex flex-col gap-3">
             <button
               onClick={() => setMode('login')}
-              className="w-full py-3 rounded transition-all"
+              className="w-full py-3 rounded transition-colors cursor-pointer bg-[rgba(0,201,201,0.1)] hover:bg-[rgba(0,201,201,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
               style={{
-                background: 'rgba(0,201,201,0.1)',
                 border: '1px solid rgba(0,201,201,0.25)',
                 color: '#00c9c9',
                 fontFamily: 'JetBrains Mono, monospace',
@@ -97,43 +96,33 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
                 letterSpacing: 1,
                 textTransform: 'uppercase',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,201,201,0.18)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,201,201,0.1)'}
             >
               Login
             </button>
             <button
               onClick={() => setMode('register')}
-              className="w-full py-3 rounded transition-all"
+              className="w-full py-3 rounded transition-colors cursor-pointer bg-transparent text-[#7ecece] hover:text-[#00c9c9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
               style={{
-                background: 'transparent',
                 border: '1px solid rgba(0,201,201,0.12)',
-                color: '#7ecece',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 11,
                 letterSpacing: 1,
                 textTransform: 'uppercase',
               }}
-              onMouseEnter={e => e.currentTarget.style.color = '#00c9c9'}
-              onMouseLeave={e => e.currentTarget.style.color = '#7ecece'}
             >
               Create ID
             </button>
             <div style={{ height: 1, background: 'rgba(0,201,201,0.06)', margin: '4px 0' }} />
             <button
               onClick={onGuest}
-              className="w-full py-3 rounded transition-all"
+              className="w-full py-3 rounded transition-colors cursor-pointer bg-transparent text-[#b8e0e0] hover:text-[#e8f5f5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
               style={{
-                background: 'transparent',
                 border: 'none',
-                color: '#b8e0e0',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 10,
                 letterSpacing: 1,
                 textTransform: 'uppercase',
               }}
-              onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
-              onMouseLeave={e => e.currentTarget.style.color = '#b8e0e0'}
             >
               Continue as Guest
             </button>
@@ -144,50 +133,50 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
         {(mode === 'login' || mode === 'register') && (
           <div className="flex flex-col gap-4">
             <div>
-              <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#7ecece', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
+              <label htmlFor="auth-id" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#7ecece', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
                 Perry Hub ID
               </label>
               <input
+                id="auth-id"
                 type="text"
                 value={id}
                 onChange={e => { setId(e.target.value); setError('') }}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                 placeholder="your-id"
                 autoFocus
-                className="w-full bg-transparent outline-none"
+                className="w-full bg-transparent outline-none border-0 border-b border-[rgba(0,201,201,0.2)] focus:border-[#00c9c9]"
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: 13,
                   color: '#e8f5f5',
-                  borderBottom: '1px solid rgba(0,201,201,0.2)',
                   paddingBottom: 8,
                 }}
               />
             </div>
 
             <div>
-              <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#7ecece', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
+              <label htmlFor="auth-password" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#7ecece', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
                 Password
               </label>
               <input
+                id="auth-password"
                 type="password"
                 value={password}
                 onChange={e => { setPassword(e.target.value); setError('') }}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                 placeholder="••••••••"
-                className="w-full bg-transparent outline-none"
+                className="w-full bg-transparent outline-none border-0 border-b border-[rgba(0,201,201,0.2)] focus:border-[#00c9c9]"
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: 13,
                   color: '#e8f5f5',
-                  borderBottom: '1px solid rgba(0,201,201,0.2)',
                   paddingBottom: 8,
                 }}
               />
             </div>
 
             {error && (
-              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#ff4444', textTransform: 'uppercase', letterSpacing: 1 }}>
+              <p role="alert" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#ff4444', textTransform: 'uppercase', letterSpacing: 1 }}>
                 {error}
               </p>
             )}
@@ -195,16 +184,12 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-3 rounded transition-all mt-2"
+              className={`w-full py-3 rounded transition-colors mt-2 border border-[rgba(0,201,201,0.25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9] ${loading ? 'cursor-not-allowed bg-[rgba(0,201,201,0.05)] text-[#4a9090]' : 'cursor-pointer bg-[rgba(0,201,201,0.1)] text-[#00c9c9] hover:bg-[rgba(0,201,201,0.18)]'}`}
               style={{
-                background: loading ? 'rgba(0,201,201,0.05)' : 'rgba(0,201,201,0.1)',
-                border: '1px solid rgba(0,201,201,0.25)',
-                color: loading ? '#4a9090' : '#00c9c9',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 11,
                 letterSpacing: 1,
                 textTransform: 'uppercase',
-                cursor: loading ? 'not-allowed' : 'pointer',
               }}
             >
               {loading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Create ID'}
@@ -213,25 +198,22 @@ export default function AuthScreen({ onGuest, onLogin, onRegister }: Props) {
             <div className="flex items-center justify-between mt-1">
               <button
                 onClick={handleBack}
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#7ecece'}
-                onMouseLeave={e => e.currentTarget.style.color = '#6ababa'}
+                className="bg-transparent border-0 p-0 cursor-pointer text-[#6ababa] hover:text-[#7ecece] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}
               >
                 ← Back
               </button>
               <button
                 onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6ababa', textTransform: 'uppercase', letterSpacing: 1 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#7ecece'}
-                onMouseLeave={e => e.currentTarget.style.color = '#6ababa'}
+                className="bg-transparent border-0 p-0 cursor-pointer text-[#6ababa] hover:text-[#7ecece] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}
               >
                 {mode === 'login' ? 'Create new ID' : 'Already have ID'}
               </button>
               <button
                 onClick={onGuest}
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#b8e0e0', textTransform: 'uppercase', letterSpacing: 1 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#e8f5f5'}
-                onMouseLeave={e => e.currentTarget.style.color = '#b8e0e0'}
+                className="bg-transparent border-0 p-0 cursor-pointer text-[#b8e0e0] hover:text-[#e8f5f5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}
               >
                 Guest
               </button>

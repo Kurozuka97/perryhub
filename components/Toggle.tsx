@@ -10,32 +10,35 @@ interface Props {
 export default function Toggle({ enabled, onToggle, label, description }: Props) {
   return (
     <button
+      role="switch"
+      aria-checked={enabled}
       onClick={onToggle}
-      className="w-full flex items-center justify-between p-3 rounded-sm border border-white/5 hover:border-white/10 transition-colors group"
+      className="w-full flex items-center justify-between p-3 rounded-sm border border-white/5 hover:border-white/10 transition-colors group focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9] cursor-pointer"
     >
-      <div className="flex flex-col gap-0.5 text-left">
+      <span className="flex flex-col gap-0.5 text-left">
         <span className="text-[11px] font-medium text-teal-200 group-hover:text-teal-100 uppercase tracking-wide">
           {label}
         </span>
         {description && (
-          <span className="text-[9px] text-teal-500 font-mono">{description}</span>
+          <span className="text-[10px] text-teal-500 font-mono">{description}</span>
         )}
-      </div>
+      </span>
 
       {/* Toggle pill */}
-      <div
+      <span
+        aria-hidden="true"
         className={`relative w-8 h-4 rounded-full transition-colors duration-300 shrink-0 ${
           enabled ? 'bg-gold-600/40 border border-gold-600/50' : 'bg-ink-700 border border-white/5'
         }`}
       >
-        <div
+        <span
           className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${
             enabled
               ? 'left-[18px] bg-gold-400 shadow-[0_0_6px_rgba(212,160,23,0.6)]'
               : 'left-0.5 bg-silver-600'
           }`}
         />
-      </div>
+      </span>
     </button>
   )
 }
