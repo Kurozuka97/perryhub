@@ -1,8 +1,14 @@
 import { DNS_OPTIONS } from '../types.ts'
 import { detectEmbeddedProxyIssue } from '../embed-detection.ts'
 import { isPrivateAddress } from '../net.ts'
+import {
+  PROXY_ENDPOINT_PREFIX,
+  PROXY_RUNTIME_ATTRIBUTE,
+  buildProxyRuntimeScript,
+} from './proxy-runtime.ts'
 
 export { isPrivateAddress } from '../net.ts'
+export { buildProxyRuntimeScript } from './proxy-runtime.ts'
 
 const HTML_CONTENT_TYPES = new Set(['text/html', 'application/xhtml+xml'])
 // Content types browsers will execute script from when navigated to directly.
@@ -19,9 +25,6 @@ const MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 const DOH_CACHE_MAX_ENTRIES = 500
 const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-const PROXY_RUNTIME_ATTRIBUTE = 'data-perry-proxy-runtime'
-const PROXY_ENDPOINT_PREFIX = '/api/proxy?url='
-
 const ALLOWED_DOH_ENDPOINTS = new Set(
   DNS_OPTIONS.map((option) => option.value).filter((value) => value !== 'none'),
 )
@@ -308,14 +311,6 @@ export function normalizeProxyBrowserUrl(
   return new URL(`${browserUrl.pathname}${browserUrl.search}${browserUrl.hash}`, currentUrl.origin)
 }
 
-export function buildProxyRuntimeScript(target: URL): string {
-  const targetUrl = JSON.stringify(target.toString())
-  const proxyPath = JSON.stringify(PROXY_ENDPOINT_PREFIX)
-
-  return `<script ${PROXY_RUNTIME_ATTRIBUTE}="1">(function(){if(window.__PERRY_PROXY_RUNTIME__)return;window.__PERRY_PROXY_RUNTIME__=true;
-const proxyOrigin=window.location.origin;const proxyPrefix=proxyOrigin+${proxyPath};let currentUrl=new URL(${targetUrl});function toAbsolute(input,base){try{return new URL(String(input),base||currentUrl);}catch{return null;}}function normalizeForProxy(absolute){if(!absolute||!/^https?:$/.test(absolute.protocol))return absolute;if(absolute.origin!==proxyOrigin)return absolute;if(absolute.pathname==='/api/proxy'){const encodedTarget=absolute.searchParams.get('url');if(encodedTarget){const decoded=toAbsolute(encodedTarget,currentUrl);if(decoded)return decoded;}return currentUrl;}return new URL(absolute.pathname+absolute.search+absolute.hash,currentUrl.origin);}function toProxyUrl(input,base){const absolute=toAbsolute(input,base);const normalized=normalizeForProxy(absolute);if(!normalized||!/^https?:$/.test(normalized.protocol))return input;return proxyPrefix+encodeURIComponent(normalized.toString());}function rewriteHistoryUrl(url){if(url==null||url==='')return url;const absolute=toAbsolute(url,currentUrl);const normalized=normalizeForProxy(absolute);if(!normalized||!/^https?:$/.test(normalized.protocol))return url;currentUrl=normalized;return proxyPrefix+encodeURIComponent(normalized.toString());}if(window.fetch){const originalFetch=window.fetch.bind(window);window.fetch=function(input,init){try{if(input instanceof Request){return originalFetch(new Request(toProxyUrl(input.url,currentUrl),init),init);}if(typeof input==='string'||input instanceof URL){return originalFetch(toProxyUrl(String(input),currentUrl),init);}}catch{}return originalFetch(input,init);};}const originalOpen=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(method,url){const args=Array.prototype.slice.call(arguments);try{args[1]=toProxyUrl(String(url),currentUrl);}catch{}return originalOpen.apply(this,args);};const originalPushState=history.pushState.bind(history);history.pushState=function(state,unused,url){return originalPushState(state,unused,rewriteHistoryUrl(url));};const originalReplaceState=history.replaceState.bind(history);history.replaceState=function(state,unused,url){return originalReplaceState(state,unused,rewriteHistoryUrl(url));};const originalAnchorClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){try{if(this.protocol==='http:'||this.protocol==='https:'){this.href=toProxyUrl(this.href,currentUrl);}}catch{}return originalAnchorClick.call(this);};})();</script>`
-}
-
 export function injectProxyDocument(html: string, target: URL): string {
   const withBaseTag = injectBaseTag(html, target)
   if (withBaseTag.includes(PROXY_RUNTIME_ATTRIBUTE)) {
@@ -534,7 +529,14 @@ export function mapProxyError(error: unknown): ProxyRequestError {
     return new ProxyRequestError(504, 'UPSTREAM_TIMEOUT', 'Upstream request timed out')
   }
 
-  if (causeCode.includes('CERT') || causeCode.startsWith('UNABLE_TO_')) {
+  if (
+    causeCode.includes('CERT') ||
+    causeCode.startsWith('UNABLE_TO_') ||
+    causeCode.includes('SSL') ||
+    causeCode.includes('TLS') ||
+    causeCode.includes('QUIC') ||
+    causeCode === 'EPROTO'
+  ) {
     return new ProxyRequestError(502, 'UPSTREAM_TLS_ERROR', 'Upstream TLS handshake failed')
   }
 

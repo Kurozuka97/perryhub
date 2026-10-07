@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { MotionConfig } from 'framer-motion'
 import Navbar from '@/components/Navbar'
@@ -8,7 +8,7 @@ import AuthScreen from '@/components/AuthScreen'
 import { useFirebase } from '@/hooks/useFirebase'
 import { useRepos } from '@/hooks/useRepos'
 import { Source, VaultTab } from '@/lib/types'
-import { DIRECT_FALLBACK_CODES } from '@/lib/proxy-codes'
+import { DEAD_CODES, DIRECT_FALLBACK_CODES } from '@/lib/proxy-codes'
 import { getValidSourceUrl } from '@/lib/source-utils'
 import { isPublicHttpUrl } from '@/lib/net'
 
@@ -105,6 +105,10 @@ export default function Home() {
             embedMessage = errorMessage
           } else if (DIRECT_FALLBACK_CODES.has(errorCode)) {
             direct = true
+          } else if (errorCode && DEAD_CODES.has(errorCode)) {
+            // Genuinely unreachable — show the dismissible overlay instead of
+            // a raw error page in the frame with a bogus "live" badge.
+            embedMessage = errorMessage || 'Source is unavailable.'
           }
         } catch {
           direct = true
@@ -116,12 +120,16 @@ export default function Home() {
         direct = true
       }
 
-      // Set both together — iframe gets correct src on first render, no flash
+      // Set both together — iframe gets correct src on first render, no flash.
+      // A pre-check failure with nothing to show keeps the frame parked at
+      // about:blank behind the overlay.
       setIsDirect(direct)
       setIframeSrc(
-        direct
-          ? url
-          : `/api/proxy?url=${encodeURIComponent(url)}${dnsQuery(settings.dnsProvider)}`,
+        embedMessage && !direct
+          ? 'about:blank'
+          : direct
+            ? url
+            : `/api/proxy?url=${encodeURIComponent(url)}${dnsQuery(settings.dnsProvider)}`,
       )
       if (embedMessage) {
         setEmbedIssue(embedMessage)
@@ -155,6 +163,59 @@ export default function Home() {
     // unreadable — embed failures are detected server-side instead.
     setSourceStatus('live')
   }, [iframeSrc, embedIssue])
+
+  // Proxied frames run in an opaque origin, so their postMessages arrive with
+  // event.origin === "null" — validate message shape only, only while a
+  // proxied frame is loaded, and never render message content.
+  useEffect(() => {
+    if (!iframeSrc.startsWith('/api/proxy')) return
+
+    const onProxyMessage = (event: MessageEvent) => {
+      const data = event.data
+      if (!data || typeof data !== 'object' || data.source !== 'perry-proxy') return
+      if (data.type === 'embed-refused') {
+        setEmbedIssue('Source refused to work embedded. Use Open in Tab.')
+      } else if (data.type === 'connection-failed') {
+        setEmbedIssue('Realtime connection was refused by the source. Use Open in Tab.')
+      } else {
+        return
+      }
+      setSourceStatus('error')
+    }
+
+    window.addEventListener('message', onProxyMessage)
+    return () => window.removeEventListener('message', onProxyMessage)
+  }, [iframeSrc])
+
+  // Direct frames that hang forever (never fire load) get the overlay after 8s.
+  useEffect(() => {
+    if (
+      !isDirect ||
+      !iframeSrc ||
+      iframeSrc === 'about:blank' ||
+      embedIssue ||
+      sourceStatus === 'live'
+    ) {
+      return
+    }
+    const timer = window.setTimeout(() => {
+      setEmbedIssue('Source refused the connection even when loaded directly. Use Open in Tab.')
+      setSourceStatus('error')
+    }, 8000)
+    return () => window.clearTimeout(timer)
+  }, [isDirect, iframeSrc, embedIssue, sourceStatus])
+
+  const dismissIssue = useCallback(() => {
+    if (!iframeSrc || iframeSrc === 'about:blank') {
+      // Nothing loaded behind the overlay — return to the home screen.
+      handleHome()
+      return
+    }
+    // Reveal whatever frame is behind it (client-side detection can
+    // false-positive; one click restores the view).
+    setEmbedIssue('')
+    setSourceStatus('live')
+  }, [iframeSrc, handleHome])
 
   const handleOpenVaultTab = useCallback((tab: VaultTab) => {
     setVaultInitialTab(tab)
@@ -262,24 +323,41 @@ export default function Home() {
                     <p className="mb-5" style={{ color: 'rgba(232,245,245,0.78)', lineHeight: 1.6 }}>
                       {embedIssue}
                     </p>
-                    <button
-                      onClick={() => {
-                        const urlToOpen = isPublicHttpUrl(rawUrl) ? rawUrl : frameUrl
-                        openExternal(urlToOpen)
-                      }}
-                      className="px-4 py-2 rounded transition-colors hover:bg-[rgba(0,201,201,0.2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
-                      style={{
-                        background: 'rgba(0,201,201,0.12)',
-                        border: '1px solid rgba(0,201,201,0.28)',
-                        color: '#00c9c9',
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontSize: 11,
-                        letterSpacing: 1,
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Open in Tab
-                    </button>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => {
+                          const urlToOpen = isPublicHttpUrl(rawUrl) ? rawUrl : frameUrl
+                          openExternal(urlToOpen)
+                        }}
+                        className="px-4 py-2 rounded transition-colors hover:bg-[rgba(0,201,201,0.2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
+                        style={{
+                          background: 'rgba(0,201,201,0.12)',
+                          border: '1px solid rgba(0,201,201,0.28)',
+                          color: '#00c9c9',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: 11,
+                          letterSpacing: 1,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Open in Tab
+                      </button>
+                      <button
+                        onClick={dismissIssue}
+                        className="px-4 py-2 rounded transition-colors hover:bg-[rgba(232,245,245,0.08)] hover:text-[rgba(232,245,245,0.9)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00c9c9]"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          color: 'rgba(232,245,245,0.6)',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: 11,
+                          letterSpacing: 1,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : null}

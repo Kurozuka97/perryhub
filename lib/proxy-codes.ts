@@ -4,12 +4,19 @@
  * label sources.
  */
 
-/** Site is alive but blocks automated/server-side access. */
+/**
+ * Server-side access fails but a direct browser load often succeeds — bot
+ * walls, datacenter IP blocks, TLS quirks. Also implies direct-iframe
+ * fallback on the client ("Needs ext. browser" when the browser is beaten too).
+ */
 export const BROWSER_REQUIRED_CODES = new Set([
   'UPSTREAM_BROWSER_VERIFICATION_REQUIRED',
   'UPSTREAM_ACCESS_DENIED',
   'UPSTREAM_RATE_LIMITED',
   'UPSTREAM_LOGIN_REQUIRED',
+  'UPSTREAM_TLS_ERROR',
+  'UPSTREAM_CONNECTION_ERROR',
+  'UPSTREAM_FETCH_FAILED',
 ])
 
 /** Genuinely unreachable / gone. */
@@ -19,9 +26,6 @@ export const DEAD_CODES = new Set([
   'UPSTREAM_SITE_ERROR',
   'UPSTREAM_HTTP_ERROR',
   'UPSTREAM_DNS_ERROR',
-  'UPSTREAM_CONNECTION_ERROR',
-  'UPSTREAM_TLS_ERROR',
-  'UPSTREAM_FETCH_FAILED',
   'UPSTREAM_RESPONSE_TOO_LARGE',
   'UPSTREAM_REDIRECT_LOOP',
 ])

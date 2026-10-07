@@ -32,3 +32,38 @@ test('detectEmbeddedProxyIssue ignores healthy embedded pages', () => {
 
   assert.equal(issue, null)
 })
+
+test('detectEmbeddedProxyIssue flags pages that refuse embedding', () => {
+  const openExternally = detectEmbeddedProxyIssue(
+    'Stream here',
+    'Please open in an external browser to continue watching.',
+  )
+  assert.equal(openExternally, 'Source requires an external browser. Use Open in Tab.')
+
+  const webVersion = detectEmbeddedProxyIssue(
+    'Reader',
+    'The web version is not available on this device.',
+  )
+  assert.equal(webVersion, 'Source requires an external browser. Use Open in Tab.')
+
+  const browserOnly = detectEmbeddedProxyIssue(
+    'Manga Hub',
+    'This feature is not available in this browser.',
+  )
+  assert.equal(browserOnly, 'Source requires an external browser. Use Open in Tab.')
+
+  const appWall = detectEmbeddedProxyIssue(
+    'AnimeX',
+    'Download our mobile app to continue reading.',
+  )
+  assert.equal(appWall, 'Source requires an external browser. Use Open in Tab.')
+})
+
+test('detectEmbeddedProxyIssue ignores normal app-store calls to action', () => {
+  const issue = detectEmbeddedProxyIssue(
+    'Phoenix Scans',
+    'Get the latest releases. Download our app from the store. Ultime uscite Oshi no Ko.',
+  )
+
+  assert.equal(issue, null)
+})

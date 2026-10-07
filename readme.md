@@ -100,6 +100,17 @@ Client-side, `lib/net.ts` reuses the same address validation for “Open in Tab�
 
 > `?check=1` requests a headers-only health probe (no body download) — used by source/channel status checks.
 
+### Working around sources that refuse embedding
+
+Proxied pages run in a sandboxed opaque origin, which some sites treat as broken. `lib/server/proxy-runtime.ts` (injected as the first script in `<head>`) patches them up in-frame:
+
+- **Storage shims** — `localStorage`/`sessionStorage`/cookies fall back to in-memory implementations when the opaque origin blocks them (storage resets on hard navigation; IndexedDB is not shimmed).
+- **Navigation containment** — user clicks, GET form submissions, and `pushState` are rewritten back through the proxy so the frame never lands on the real origin (which would render blank behind `X-Frame-Options`). `_blank` links and `POST` forms intentionally escape (POST isn't proxied).
+- **Refusal detection** — a scanner looks for explicit "open in external browser" interstitials and, after a failed WebSocket handshake (WebSockets can't be proxied serverless), connection-failure copy; either posts a message to the parent shell.
+- **Direct-first fallback** — proxy pre-check failures for TLS/connection/fetch errors load the raw URL in the frame directly; a hung direct frame gets the overlay after 8s.
+
+When a refusal is detected (or the page is genuinely unreachable), a dismissible overlay offers **Open in Tab** — a real tab has no sandbox, no same-origin policy, and full WebSockets.
+
 ---
 
 ## Accounts (optional)

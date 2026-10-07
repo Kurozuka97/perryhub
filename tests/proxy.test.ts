@@ -160,6 +160,17 @@ test('mapProxyError classifies tls and timeout failures', () => {
   assert.equal(timeoutError.code, 'UPSTREAM_TIMEOUT')
 })
 
+test('mapProxyError classifies open-protocol and ssl/tls failures as tls errors', () => {
+  for (const code of ['EPROTO', 'ERR_SSL_WRONG_VERSION_NUMBER', 'ERR_TLS_CERT_INVALIDATED', 'ERR_QUIC_PROTOCOL_ERROR']) {
+    const tlsError = mapProxyError({ cause: { code } })
+    assert.equal(tlsError.status, 502, code)
+    assert.equal(tlsError.code, 'UPSTREAM_TLS_ERROR', code)
+  }
+
+  const generic = mapProxyError({ cause: { code: 'EPIPE' } })
+  assert.equal(generic.code, 'UPSTREAM_FETCH_FAILED')
+})
+
 test('fetchProxyPayload rejects browser-verification and missing upstream pages', async () => {
   const challengeFetchMock: typeof fetch = async () =>
     new Response('<html><body>Just a moment... Cloudflare</body></html>', {
